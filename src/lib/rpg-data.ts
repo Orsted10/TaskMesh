@@ -60,7 +60,8 @@ const itemNames: Record<ItemType, string[]> = {
   Chest: ["Chestplate", "Armor", "Robes", "Jacket", "Exosuit", "Tunic"],
   Legs: ["Greaves", "Pants", "Leggings", "Shorts", "Trousers", "Exo-Legs"],
   Weapon: ["Sword", "Axe", "Bow", "Staff", "Keyboard", "Mouse", "Glove", "Whip"],
-  Accessory: ["Ring", "Amulet", "Charm", "Badge", "USB Drive", "Token"]
+  Accessory: ["Ring", "Amulet", "Charm", "Badge", "USB Drive", "Token"],
+  SkillBook: ["Tome", "Scroll", "Manual", "Grimoire", "Script", "Codex"]
 }
 
 export function generateLootPool(): Item[] {
