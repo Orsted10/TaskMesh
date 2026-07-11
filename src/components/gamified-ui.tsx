@@ -10,7 +10,7 @@ import { LOOT_POOL, SKILL_POOL, Item, ItemType, Rarity, RARITY_COLORS, Skill } f
 // ==========================================
 export function MouseGlow() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const [trail, setTrail] = useState<{x: number, y: number, id: number}[]>([])
+  const [trail, setTrail] = useState<{x: number, y: number, id: string}[]>([])
 
   useEffect(() => {
     const updateMousePosition = (ev: MouseEvent) => {
