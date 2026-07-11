@@ -436,7 +436,7 @@ export function EpicBossBattle() {
       <div className="group relative z-30">
         <div 
           onClick={() => item && unequipItem(type)}
-          className={`relative ${className} ${item ? item.color + " cursor-none hover:brightness-150 transition-all duration-300" : "border-muted/30 bg-transparent text-muted/30 transition-all duration-300"}`}
+          className={`relative ${className} ${item ? item.color + " cursor-none hover:brightness-150 transition-all duration-300" : "border-black/20 dark:border-white/20 bg-transparent text-black/20 dark:text-white/20 transition-all duration-300"}`}
         >
           {type === "Chest" && <div className="absolute inset-2 border border-current opacity-40 pointer-events-none" />}
           {type === "Head" && <div className="w-3 h-1 bg-current opacity-60 pointer-events-none" />}
@@ -460,13 +460,13 @@ export function EpicBossBattle() {
   const PaperDoll = () => (
     <div className="relative w-32 h-48 flex flex-col items-center justify-center gap-[2px] opacity-90 mt-2 z-20">
       <PaperDollItem type="Head" className="w-10 h-10 clip-angled border-2 flex items-center justify-center" />
-      <div className="w-3 h-2 bg-muted/20" />
+      <div className="w-3 h-2 bg-black/10 dark:bg-white/10" />
       <div className="flex items-start gap-1">
         <PaperDollItem type="Weapon" className="w-5 h-20 clip-angled border-2 mt-2 rotate-6" />
         <PaperDollItem type="Chest" className="w-16 h-20 clip-angled-tl border-2 relative" />
         <PaperDollItem type="Accessory" className="w-5 h-20 clip-angled border-2 mt-2 -rotate-6" />
       </div>
-      <div className="w-10 h-2 bg-muted/20" />
+      <div className="w-10 h-2 bg-black/10 dark:bg-white/10" />
       <PaperDollItem type="Legs" className="w-14 h-16 clip-angled-br border-2 relative" />
     </div>
   )
@@ -505,19 +505,19 @@ export function EpicBossBattle() {
               </div>
               <div className="flex justify-between font-mono text-sm pb-1">
                 <span className="text-muted">MANA:</span>
-                <span className="text-blue-400 font-bold">{playerMana}/{totalStats.maxMana}</span>
+                <span className="text-blue-600 dark:text-blue-400 font-bold">{playerMana}/{totalStats.maxMana}</span>
               </div>
             </div>
 
             {statPoints > 0 && (
-              <div className="w-full mt-4 p-3 bg-primary/10 border border-primary/30 flex flex-col gap-2 relative z-10 shadow-[inset_0_0_20px_rgba(255,70,85,0.1)]">
+              <div className="w-full bg-primary/5 dark:bg-primary/20 border border-primary/20 dark:border-primary/30 p-4 clip-angled mt-4 mb-2 animate-[pulse_3s_ease-in-out_infinite] z-10">
                 <div className="text-primary font-bold font-teko text-xl uppercase animate-pulse text-center tracking-widest border-b border-primary/20 pb-1">Level Up! {statPoints} Pts</div>
                 <div className="flex justify-between gap-2 mt-1">
                   {(["STR", "VIT", "INT"] as const).map(stat => (
                     <button 
                       key={stat}
                       onClick={() => { setBaseStats(p => ({...p, [stat]: p[stat]+1})); setStatPoints(p => p - 1) }}
-                      className="flex-1 bg-background hover:bg-primary text-primary hover:text-black border border-primary/50 text-sm font-mono py-1 font-bold cursor-none transition-all"
+                      className="flex-1 bg-background hover:bg-primary text-primary hover:text-white border border-primary/50 text-sm font-mono py-1 font-bold cursor-none transition-all"
                     >
                       {stat}+
                     </button>
@@ -533,10 +533,10 @@ export function EpicBossBattle() {
                 style={{ boxShadow: "inset 0 0 20px rgba(34,211,238,0.1), 0 0 15px rgba(34,211,238,0.2)" }}
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/20 to-transparent translate-y-[100%] group-hover/btn:translate-y-0 transition-transform duration-300 ease-out" />
-                <Backpack className="w-6 h-6 text-cyan-400 group-hover/btn:-translate-y-1 transition-transform duration-300 relative z-10" /> 
-                <span className="relative z-10 font-teko text-xl lg:text-2xl uppercase text-cyan-100 font-bold tracking-widest group-hover/btn:text-white transition-colors w-full text-center truncate">BACKPACK</span>
-                <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-cyan-400" />
-                <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-cyan-400" />
+                <Backpack className="w-6 h-6 text-cyan-500 dark:text-cyan-400 group-hover/btn:-translate-y-1 transition-transform duration-300 relative z-10" /> 
+                <span className="relative z-10 font-teko text-xl lg:text-2xl uppercase text-cyan-800 dark:text-cyan-100 font-bold tracking-widest group-hover/btn:text-cyan-900 dark:group-hover/btn:text-white transition-colors w-full text-center truncate">BACKPACK</span>
+                <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-cyan-500 dark:border-cyan-400" />
+                <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-cyan-500 dark:border-cyan-400" />
               </button>
 
               <button 
@@ -545,8 +545,8 @@ export function EpicBossBattle() {
                 style={{ boxShadow: "inset 0 0 20px rgba(168,85,247,0.1), 0 0 15px rgba(168,85,247,0.2)" }}
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-purple-500/20 to-transparent translate-y-[100%] group-hover/btn:translate-y-0 transition-transform duration-300 ease-out" />
-                <Book className="w-6 h-6 text-purple-400 group-hover/btn:-translate-y-1 transition-transform duration-300 relative z-10" /> 
-                <span className="relative z-10 font-teko text-xl lg:text-2xl uppercase text-purple-100 font-bold tracking-widest group-hover/btn:text-white transition-colors w-full text-center truncate">GRIMOIRE</span>
+                <Book className="w-6 h-6 text-purple-500 dark:text-purple-400 group-hover/btn:-translate-y-1 transition-transform duration-300 relative z-10" /> 
+                <span className="relative z-10 font-teko text-xl lg:text-2xl uppercase text-purple-800 dark:text-purple-100 font-bold tracking-widest group-hover/btn:text-purple-900 dark:group-hover/btn:text-white transition-colors w-full text-center truncate">GRIMOIRE</span>
                 <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-purple-400" />
                 <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-purple-400" />
               </button>
@@ -566,9 +566,9 @@ export function EpicBossBattle() {
               <Skull className="w-4 h-4" /> BOSS LVL_{level}
             </div>
             
-            <div className={`w-full relative border bg-background/80 p-6 clip-angled-tl backdrop-blur-sm transition-colors duration-300 ${bossState === "ultimate" ? 'border-primary shadow-[0_0_50px_rgba(255,70,85,0.4)]' : bossState === "casting" ? 'border-purple-500 shadow-[0_0_50px_rgba(168,85,247,0.4)]' : 'border-primary/30'}`}>
+            <div className={`w-full relative border bg-background/80 p-6 clip-angled-tl backdrop-blur-sm transition-colors duration-300 ${bossState === "ultimate" ? 'border-primary shadow-xl dark:shadow-[0_0_50px_rgba(255,70,85,0.4)]' : bossState === "casting" ? 'border-purple-500 shadow-xl dark:shadow-[0_0_50px_rgba(168,85,247,0.4)]' : 'border-black/10 dark:border-primary/30 shadow-sm dark:shadow-none'}`}>
               <div className="flex justify-between items-end mb-2 mt-4">
-                <span className="font-teko text-5xl uppercase tracking-widest text-foreground font-black drop-shadow-md">
+                <span className="font-teko text-5xl uppercase tracking-widest text-foreground font-black dark:drop-shadow-md">
                   {currentBossName}
                 </span>
                 <div className="flex flex-col items-end">
@@ -578,7 +578,7 @@ export function EpicBossBattle() {
               </div>
               
               <div className="flex flex-col gap-1">
-                <div className="h-6 bg-[#111111] relative p-[2px] border border-white/10">
+                <div className="h-6 bg-neutral-200 dark:bg-[#111111] relative p-[2px] border border-black/10 dark:border-white/10">
                   <motion.div 
                     className="h-full bg-primary shadow-[0_0_10px_rgba(255,70,85,0.8)]"
                     initial={{ width: "100%" }}
@@ -586,7 +586,7 @@ export function EpicBossBattle() {
                     transition={{ type: "spring", bounce: 0 }}
                   />
                 </div>
-                <div className="h-2 bg-[#111111] relative border border-white/10">
+                <div className="h-2 bg-neutral-200 dark:bg-[#111111] relative border border-black/10 dark:border-white/10">
                   <motion.div 
                     className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]"
                     initial={{ width: "100%" }}
@@ -617,14 +617,14 @@ export function EpicBossBattle() {
               </div>
             </div>
             <div className="flex flex-col gap-1">
-              <div className="h-4 bg-[#111111] relative border border-white/5">
+              <div className="h-4 bg-neutral-200 dark:bg-[#111111] relative border border-black/5 dark:border-white/5">
                 <motion.div 
                   className={`h-full ${shieldActive ? 'bg-blue-300 shadow-[0_0_15px_rgba(147,197,253,0.8)]' : 'bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]'}`}
                   initial={{ width: "100%" }}
                   animate={{ width: `${(playerHp / totalStats.maxHp) * 100}%` }}
                 />
               </div>
-              <div className="h-2 bg-[#111111] relative border border-white/5">
+              <div className="h-2 bg-neutral-200 dark:bg-[#111111] relative border border-black/5 dark:border-white/5">
                 <motion.div 
                   className="h-full bg-blue-500"
                   initial={{ width: "100%" }}
@@ -784,14 +784,14 @@ export function EpicBossBattle() {
                       </div>
                       <span className="text-[10px] uppercase font-mono text-muted/80 mt-1">{item.type}</span>
                       <span className="font-mono text-base font-bold mt-1 text-foreground leading-tight min-h-[40px]">{item.name}</span>
-                      <div className="flex flex-col gap-1 mt-4 text-xs font-mono opacity-80 border-t border-white/10 pt-2">
+                      <div className="flex flex-col gap-1 mt-4 text-xs font-mono opacity-80 border-t border-black/10 dark:border-white/10 pt-2">
                         {item.stats.attack !== undefined && <span className="text-primary">ATK +{item.stats.attack}</span>}
                         {item.stats.attackPercent !== undefined && <span className="text-primary">ATK +{item.stats.attackPercent * 100}%</span>}
-                        {item.stats.defense !== undefined && <span className="text-cyan-400">DEF +{item.stats.defense}</span>}
-                        {item.stats.hp !== undefined && <span className="text-green-400">HP +{item.stats.hp}</span>}
-                        {item.stats.mana !== undefined && <span className="text-blue-400">MANA +{item.stats.mana}</span>}
-                        {item.stats.manaRegen !== undefined && <span className="text-blue-400">M.REG +{item.stats.manaRegen}</span>}
-                        {item.stats.hpRegen !== undefined && <span className="text-green-400">H.REG +{item.stats.hpRegen}</span>}
+                        {item.stats.defense !== undefined && <span className="text-cyan-700 dark:text-cyan-400">DEF +{item.stats.defense}</span>}
+                        {item.stats.hp !== undefined && <span className="text-green-700 dark:text-green-400">HP +{item.stats.hp}</span>}
+                        {item.stats.mana !== undefined && <span className="text-blue-700 dark:text-blue-400">MANA +{item.stats.mana}</span>}
+                        {item.stats.manaRegen !== undefined && <span className="text-blue-700 dark:text-blue-400">M.REG +{item.stats.manaRegen}</span>}
+                        {item.stats.hpRegen !== undefined && <span className="text-green-700 dark:text-green-400">H.REG +{item.stats.hpRegen}</span>}
                       </div>
                     </motion.div>
                   ))}
@@ -849,12 +849,12 @@ export function EpicBossBattle() {
                         [{skill.rarity}] {skill.type}
                       </span>
                       <span className="font-teko text-2xl font-bold mt-2 text-foreground leading-tight min-h-[40px] uppercase">{skill.name}</span>
-                      <div className="flex flex-col gap-1 mt-2 text-xs font-mono opacity-80 border-t border-white/10 pt-2">
-                        {skill.manaCost > 0 && <span className="text-blue-400">MANA COST: {skill.manaCost}</span>}
-                        {skill.cooldown > 0 && <span className="text-muted">COOLDOWN: {skill.cooldown}s</span>}
+                      <div className="flex flex-col gap-1 mt-2 text-xs font-mono opacity-80 border-t border-black/10 dark:border-white/10 pt-2">
+                        {skill.manaCost > 0 && <span className="text-blue-700 dark:text-blue-400">MANA COST: {skill.manaCost}</span>}
+                        {skill.cooldown > 0 && <span className="text-foreground/70 dark:text-muted">COOLDOWN: {skill.cooldown}s</span>}
                         {skill.damage && <span className="text-primary">DAMAGE: {skill.damage}</span>}
-                        {skill.heal && <span className="text-green-400">HEAL: {skill.heal}</span>}
-                        <span className="text-muted italic mt-1 leading-tight">{skill.description}</span>
+                        {skill.heal && <span className="text-green-700 dark:text-green-400">HEAL: {skill.heal}</span>}
+                        <span className="text-foreground/60 dark:text-muted italic mt-1 leading-tight">{skill.description}</span>
                       </div>
                     </motion.div>
                   ))}

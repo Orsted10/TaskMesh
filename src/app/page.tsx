@@ -192,7 +192,7 @@ export default function RPGPage() {
             <h2 className="font-teko text-6xl md:text-8xl font-black tracking-tight text-foreground uppercase leading-[0.8]">
               Defeat The <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-500 drop-shadow-md">Boss</span>
             </h2>
-            <p className="text-xl text-foreground font-sans font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            <p className="text-xl text-foreground font-sans font-bold dark:drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
               Every task is an enemy. Play the live interactive RPG demo. Manage your HP, defend against ultimates, and collect Mythic loot when the boss is defeated!
             </p>
           </div>
@@ -216,7 +216,7 @@ export default function RPGPage() {
             <h2 className="font-teko text-6xl sm:text-8xl md:text-[9rem] font-black tracking-tight text-foreground uppercase mb-4 leading-none">
               Your Arsenal
             </h2>
-            <p className="text-2xl text-muted max-w-3xl mx-auto font-bold font-sans">
+            <p className="text-2xl text-foreground/80 max-w-3xl mx-auto font-bold font-sans">
               Built on high-performance edge networks. Powered by Vision AI. Your tools for destroying procrastination.
             </p>
           </div>
@@ -297,7 +297,7 @@ export default function RPGPage() {
             {/* Free Tier */}
             <SpotlightCard 
               delay={0.1}
-              className="bg-secondary border border-muted/20 clip-angled-br p-8 hover:border-primary/50 shadow-[0_10px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.2)]"
+              className="bg-white dark:bg-secondary border border-black/10 dark:border-white/10 clip-angled-br p-8 hover:border-primary/50 shadow-[0_10px_30px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.2)]"
             >
               <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.02)_50%)] dark:bg-[linear-gradient(transparent_50%,rgba(255,255,255,0.02)_50%)] bg-[length:100%_4px] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="absolute inset-0 bg-[linear-gradient(rgba(255,70,85,0)_0%,rgba(255,70,85,0.05)_50%,rgba(255,70,85,0)_100%)] h-[200%] w-full -translate-y-full group-hover:animate-[scan_4s_linear_infinite] pointer-events-none z-0" />
@@ -309,7 +309,7 @@ export default function RPGPage() {
 
               <User className="absolute top-8 right-8 w-12 h-12 text-muted/20 group-hover:text-primary/20 transition-colors duration-500" />
               
-              <h3 className="font-teko text-4xl font-bold text-foreground uppercase mb-2 relative z-10 group-hover:text-white transition-colors">Solo Player</h3>
+              <h3 className="font-teko text-4xl font-bold text-foreground uppercase mb-2 relative z-10 group-hover:text-primary dark:group-hover:text-white transition-colors">Solo Player</h3>
               <div className="font-teko text-5xl font-black text-primary mb-6 relative z-10 group-hover:animate-pulse">FREE</div>
               <ul className="space-y-4 mb-8 font-mono text-sm text-foreground/80 relative z-10">
                 <li className="flex items-start gap-2 group-hover:translate-x-1 transition-transform duration-300 delay-[50ms]"><span className="text-primary mt-0.5">»</span> <span>Access to basic quests</span></li>
@@ -361,7 +361,7 @@ export default function RPGPage() {
             {/* Enterprise Tier */}
             <SpotlightCard 
               delay={0.3}
-              className="bg-secondary border border-muted/20 clip-angled-tl p-8 hover:border-cyan-500/50 shadow-[0_10px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.2)]"
+              className="bg-white dark:bg-secondary border border-black/10 dark:border-white/10 clip-angled-tl p-8 hover:border-cyan-500/50 shadow-[0_10px_30px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.2)]"
             >
               <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.02)_50%)] dark:bg-[linear-gradient(transparent_50%,rgba(255,255,255,0.02)_50%)] bg-[length:100%_4px] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,204,0)_0%,rgba(0,255,204,0.05)_50%,rgba(0,255,204,0)_100%)] h-[200%] w-full -translate-y-full group-hover:animate-[scan_4s_linear_infinite] pointer-events-none z-0" />
@@ -373,7 +373,7 @@ export default function RPGPage() {
 
               <Building className="absolute top-8 right-8 w-12 h-12 text-muted/20 group-hover:text-cyan-500/20 transition-colors duration-500" />
               
-              <h3 className="font-teko text-4xl font-bold text-foreground uppercase mb-2 relative z-10 group-hover:text-white transition-colors">Corporation</h3>
+              <h3 className="font-teko text-4xl font-bold text-foreground uppercase mb-2 relative z-10 group-hover:text-cyan-600 dark:group-hover:text-white transition-colors">Corporation</h3>
               <div className="font-teko text-5xl font-black text-cyan-500 mb-6 relative z-10 group-hover:animate-pulse">CUSTOM</div>
               <ul className="space-y-4 mb-8 font-mono text-sm text-foreground/80 relative z-10">
                 <li className="flex items-start gap-2 group-hover:translate-x-1 transition-transform duration-300 delay-[50ms]"><span className="text-cyan-500 mt-0.5">»</span> <span>Private Enterprise Server</span></li>
@@ -393,34 +393,74 @@ export default function RPGPage() {
       <section className="relative bg-primary pt-32 pb-16 clip-angled-tl z-20 overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay z-0 pointer-events-none" />
         
-        <div className="max-w-5xl mx-auto px-6 relative z-10 text-center mb-32">
+        {/* Decorative Background Elements */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0)_50%,rgba(0,0,0,0.15)_50%)] bg-[length:100%_4px] pointer-events-none opacity-40 z-0" />
+        <Hexagon className="absolute -top-32 -left-32 w-[30rem] h-[30rem] text-black/10 animate-[spin_20s_linear_infinite] pointer-events-none z-0" />
+        <Crosshair className="absolute bottom-10 right-10 w-64 h-64 text-black/5 animate-[pulse_4s_ease-in-out_infinite] pointer-events-none z-0" />
+        
+        <div className="absolute top-10 right-10 font-mono text-xs font-bold text-black/40 tracking-[0.2em] pointer-events-none z-0">
+          SECURE_ENCLAVE // PORT_8080 // STANDBY
+        </div>
+        <div className="absolute bottom-10 left-10 font-mono text-xs font-bold text-black/40 tracking-[0.2em] -rotate-90 origin-bottom-left pointer-events-none z-0">
+          SYS.OVERRIDE_ENABLED
+        </div>
+        
+        <div className="max-w-5xl mx-auto px-6 relative z-10 text-center mb-32 flex flex-col items-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1 bg-black/20 text-white font-mono text-sm mb-6 clip-angled backdrop-blur-md">
+            <Zap className="w-4 h-4 text-white animate-pulse" />
+            FINAL PROTOCOL
+          </div>
           <h2 className="font-teko text-7xl md:text-9xl lg:text-[11rem] font-black text-background uppercase leading-[0.8] mb-12 drop-shadow-[0_10px_0_rgba(0,0,0,0.2)]">
             Ready To <br/> Deploy?
           </h2>
           
-          <button className="px-16 py-8 bg-primary text-white font-teko text-4xl font-bold uppercase tracking-widest clip-angled hover:scale-110 hover:bg-white hover:text-black transition-all duration-300 cursor-none shadow-[0_0_40px_rgba(255,70,85,0.6)] hover:shadow-[0_0_60px_rgba(255,255,255,0.8)] group">
-            <span className="relative z-10">Enter Dashboard</span>
-          </button>
+          <Link href="/dashboard" className="group">
+            <button className="relative px-16 py-8 bg-background text-foreground border border-black/20 font-teko text-4xl font-bold uppercase tracking-widest clip-angled hover:scale-110 hover:bg-white hover:text-black transition-all duration-300 cursor-none shadow-[0_20px_50px_rgba(0,0,0,0.4)] hover:shadow-[0_0_60px_rgba(255,255,255,0.8)] overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+              <span className="relative z-10 flex items-center gap-4">
+                Enter Dashboard <Target className="w-8 h-8 group-hover:rotate-180 transition-transform duration-500" />
+              </span>
+            </button>
+          </Link>
         </div>
       </section>
 
       {/* FOOTER */}
-      <footer className="relative z-10 bg-secondary py-12 px-6 border-t border-muted/20">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2 text-foreground font-black text-3xl tracking-wider uppercase">
-            <Hexagon className="w-8 h-8 fill-primary stroke-primary" />
+      <footer className="relative z-10 bg-[#0a0a0a] py-16 px-6 border-t border-white/5 overflow-hidden">
+        {/* Subtle background tech lines */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10 relative z-10">
+          <div className="flex items-center gap-3 text-white font-teko font-black text-4xl tracking-widest uppercase drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+            <div className="relative">
+              <Hexagon className="w-10 h-10 text-primary drop-shadow-[0_0_10px_rgba(255,70,85,0.8)]" />
+              <div className="absolute inset-0 w-full h-full animate-ping opacity-20 bg-primary rounded-full blur-xl" />
+            </div>
             TaskMesh
           </div>
-          <div className="flex gap-8 font-mono text-sm text-muted">
-            <Link href="#" className="hover:text-primary transition-colors cursor-none">Privacy_Policy</Link>
-            <Link href="#" className="hover:text-primary transition-colors cursor-none">Terms_Of_Service</Link>
+          
+          <div className="flex gap-12 font-mono text-sm font-bold text-white/50 uppercase tracking-widest">
+            <Link href="#" className="hover:text-primary transition-all duration-300 cursor-none relative group">
+              <span className="text-primary/50 mr-2 opacity-0 group-hover:opacity-100 transition-opacity">»</span>
+              Privacy_Policy
+              <div className="absolute -bottom-2 left-0 w-0 h-[1px] bg-primary group-hover:w-full transition-all duration-300" />
+            </Link>
+            <Link href="#" className="hover:text-primary transition-all duration-300 cursor-none relative group">
+              <span className="text-primary/50 mr-2 opacity-0 group-hover:opacity-100 transition-opacity">»</span>
+              Terms_Of_Service
+              <div className="absolute -bottom-2 left-0 w-0 h-[1px] bg-primary group-hover:w-full transition-all duration-300" />
+            </Link>
           </div>
-          <div className="flex flex-col md:flex-row items-center gap-6">
-            <div className="bg-foreground text-background font-mono text-xs px-4 py-2 font-bold flex items-center gap-2 clip-angled shadow-[0_0_15px_rgba(0,255,204,0.2)]">
-              SYSTEM STATUS: <span className="text-accent animate-pulse">ONLINE</span>
+          
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            <div className="bg-black/50 backdrop-blur-md text-green-400 font-mono text-xs px-4 py-2 font-bold flex items-center gap-3 border border-green-500/30 clip-angled shadow-[0_0_20px_rgba(34,197,94,0.15)] relative group">
+              <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-green-500" />
+              <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-green-500" />
+              SYSTEM_STATUS <span className="flex items-center gap-2 text-white"><div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,1)]" /> ONLINE</span>
             </div>
-            <div className="font-teko text-xl text-muted tracking-widest uppercase">
-              © 2026 TaskMesh. Play your life.
+            
+            <div className="font-teko text-2xl text-white/40 tracking-widest uppercase flex items-center gap-2">
+              <span className="text-primary">©</span> 2026 TaskMesh.
             </div>
           </div>
         </div>
