@@ -105,8 +105,8 @@ export default function RPGPage() {
           <Link href="#pricing" className="font-teko text-xl tracking-widest text-foreground hover:text-primary transition-colors cursor-none">
              // GUILDS
           </Link>
-          <Link href="/login" className="font-teko text-xl tracking-widest text-foreground/80 hover:text-primary transition-colors cursor-none ml-4 flex items-center gap-2">
-             <Shield className="w-4 h-4" /> LOGIN
+          <Link href="/sign-up" className="font-teko text-xl tracking-widest text-foreground/80 hover:text-primary transition-colors cursor-none ml-4 flex items-center gap-2">
+             <Shield className="w-4 h-4" /> SIGN UP
           </Link>
           <div className="ml-4 pl-4 border-l border-muted/20">
             <ThemeToggle />
@@ -159,7 +159,7 @@ export default function RPGPage() {
             A multiplayer productivity RPG. Conquer tutorial hell through gamified quests, cryptographic proof of action, and real-world civic bounties.
           </p>
 
-          <Link href="/dashboard" className="group z-20">
+          <Link href="/sign-up" className="group z-20">
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
