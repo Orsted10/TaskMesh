@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Sparkles, Link as LinkIcon, Type, Cpu, Crosshair, ShieldAlert, 
   Activity, User as UserIcon, Zap, Target, Trophy, Clock, Loader2,
-  Home, LayoutGrid, Gift, Monitor, Star, ShoppingBag, MessageSquare, 
-  Plus, Search, Bell, ShoppingCart, ArrowRight
+  LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/auth-context';
 import { supabase } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 type QuestStep = {
   order_index: number;
@@ -36,7 +36,8 @@ type GeneratedQuest = {
 };
 
 export default function Dashboard() {
-  const { user, rpgProfile } = useAuth();
+  const { user, rpgProfile, loading } = useAuth();
+  const router = useRouter();
   const [inputType, setInputType] = useState<'text' | 'url'>('text');
   const [payload, setPayload] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -59,7 +60,7 @@ export default function Dashboard() {
 
       const data = await res.json();
       
-      if (!res.ok) throw new Error(data.error || 'Failed to generate mission.');
+      if (!res.ok) throw new Error(data.details || data.error || 'Failed to generate mission.');
 
       setGeneratedQuest(data);
       toast.success('Mission Generated Successfully.');
@@ -69,6 +70,12 @@ export default function Dashboard() {
       setIsProcessing(false);
     }
   };
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/');
+    }
+  }, [user, loading, router]);
 
   const handleAcceptMission = async () => {
     if (!user || !generatedQuest) return;
@@ -121,337 +128,342 @@ export default function Dashboard() {
     }
   };
 
-  // Safe username fallback
-  const username = rpgProfile?.username?.toUpperCase() || 'AGENT';
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success('Logged out successfully.');
+    router.push('/');
+  };
+
+  // Determine display name (Google Auth full name -> RPG Username -> fallback)
+  const displayName = user?.user_metadata?.full_name || rpgProfile?.username || 'AGENT';
+  
+  // Calculate Progress
+  const currentExp = rpgProfile?.total_exp || 0;
+  const currentLevel = rpgProfile?.level || 1;
+  const nextLevelExp = currentLevel * 1000;
+  const progressPercent = Math.min(100, Math.max(0, (currentExp / nextLevelExp) * 100));
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#ff4655] animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#fed2d2] flex items-center justify-center p-4 sm:p-8 font-sans selection:bg-white/30">
+    <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-[#ff4655]/30 pt-24 pb-20 relative overflow-hidden">
       
-      {/* MAC-STYLE APP WINDOW */}
-      <div className="w-full max-w-[1600px] h-[90vh] bg-[#3a111a] rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex overflow-hidden border-4 border-[#2b0c13]">
+      {/* GLITCH & GRID EFFECTS (Same as Landing Page) */}
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03] pointer-events-none mix-blend-screen" />
+      <div className="absolute top-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#ff4655]/40 to-transparent shadow-[0_0_15px_rgba(255,70,85,0.4)]" />
+      <div className="absolute top-0 right-0 w-[50vw] h-[50vw] bg-[#ff4655]/5 blur-[120px] rounded-full pointer-events-none mix-blend-screen" />
+      <div className="absolute bottom-0 left-0 w-[40vw] h-[40vw] bg-blue-500/5 blur-[100px] rounded-full pointer-events-none mix-blend-screen" />
+
+      {/* TOP DECORATION */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-4 opacity-30 text-[10px] font-mono tracking-[0.3em] text-[#ff4655] pointer-events-none z-0">
+        <span className="w-12 h-px bg-[#ff4655]" />
+        SYSTEM SECURE /// SESSION ACTIVE
+        <span className="w-12 h-px bg-[#ff4655]" />
+      </div>
+
+      <div className="relative z-10 max-w-[1600px] mx-auto px-4 sm:px-8">
         
-        {/* LEFT SIDEBAR (DARK ICON BAR) */}
-        <div className="w-20 bg-[#1d0a0f] flex flex-col items-center py-8 justify-between z-20">
-          <div className="space-y-6 flex flex-col items-center">
-            {/* Logo */}
-            <div className="w-10 h-10 mb-6 bg-gradient-to-br from-[#ff4655] to-orange-500 rounded-xl flex items-center justify-center transform rotate-45 shadow-lg">
-              <Crosshair className="w-5 h-5 text-white -rotate-45" />
-            </div>
-            
-            {/* Nav Icons */}
-            <div className="p-3 bg-[#3a111a] rounded-xl text-[#ff4655] cursor-pointer"><Home className="w-5 h-5" /></div>
-            <div className="p-3 text-[#ff4655]/40 hover:text-[#ff4655] transition-colors cursor-pointer"><LayoutGrid className="w-5 h-5" /></div>
-            <div className="p-3 text-[#ff4655]/40 hover:text-[#ff4655] transition-colors cursor-pointer"><Gift className="w-5 h-5" /></div>
-            <div className="p-3 text-[#ff4655]/40 hover:text-[#ff4655] transition-colors cursor-pointer"><Monitor className="w-5 h-5" /></div>
-            <div className="p-3 text-[#ff4655]/40 hover:text-[#ff4655] transition-colors cursor-pointer"><Star className="w-5 h-5" /></div>
-            <div className="p-3 text-[#ff4655]/40 hover:text-[#ff4655] transition-colors cursor-pointer"><ShoppingBag className="w-5 h-5" /></div>
-            <div className="p-3 text-[#ff4655]/40 hover:text-[#ff4655] transition-colors cursor-pointer"><MessageSquare className="w-5 h-5" /></div>
+        {/* HEADER: MASSIVE TYPOGRAPHY (Like Landing Page) */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-16 gap-8">
+          <div>
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-6xl lg:text-8xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-zinc-100 to-zinc-500 font-teko leading-[0.8]"
+            >
+              COMMAND<br />
+              <span className="text-[#ff4655] inline-block -skew-x-12 px-2 border-l-8 border-[#ff4655] bg-gradient-to-r from-[#ff4655]/20 to-transparent">
+                CENTER.
+              </span>
+            </motion.h1>
+            <p className="text-zinc-400 mt-6 max-w-xl text-lg border-l-2 border-zinc-800 pl-4 font-mono text-sm uppercase tracking-widest">
+              Welcome back, <span className="text-white font-bold">{displayName}</span>. <br/> Initialize your next operation below.
+            </p>
           </div>
           
-          <div className="p-3 border border-[#ff4655]/30 rounded-xl text-[#ff4655] hover:bg-[#ff4655] hover:text-white transition-all cursor-pointer border-dashed">
-            <Plus className="w-5 h-5" />
-          </div>
+          <Button 
+            onClick={handleLogout}
+            variant="outline"
+            className="border-zinc-800 hover:bg-[#ff4655]/10 hover:text-[#ff4655] hover:border-[#ff4655]/30 text-zinc-400 font-bold uppercase tracking-widest transition-all"
+          >
+            <LogOut className="w-4 h-4 mr-2" /> Terminate Session
+          </Button>
         </div>
 
-        {/* MAIN DASHBOARD AREA */}
-        <div className="flex-1 flex flex-col relative overflow-hidden bg-gradient-to-br from-[#4d1723] to-[#3a111a]">
-          {/* Subtle grid/texture */}
-          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02] pointer-events-none mix-blend-overlay" />
+        {/* MAIN DASHBOARD GRID */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
           
-          {/* HEADER */}
-          <div className="px-10 pt-8 pb-4 flex justify-between items-center relative z-10">
-            <div className="flex items-center gap-2">
-              <span className="text-[#fca5a5] text-xl font-light">Good evening,</span>
-              <span className="text-white text-xl font-bold tracking-wide">{username}</span>
-            </div>
-            
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                <Search className="w-4 h-4 text-[#fca5a5] absolute left-3 top-1/2 -translate-y-1/2" />
-                <input 
-                  type="text" 
-                  placeholder="Search" 
-                  className="bg-[#2b0c13]/50 border border-[#fca5a5]/20 text-white placeholder:text-[#fca5a5]/50 text-sm rounded-full pl-10 pr-4 py-2 w-64 focus:outline-none focus:border-[#ff4655] transition-colors"
-                />
+          {/* LEFT: PLAYER PROFILE (TECH HUD STYLE) */}
+          <div className="xl:col-span-3 flex flex-col gap-6">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-zinc-900/50 backdrop-blur-xl border-t border-l border-zinc-800/50 rounded-none relative p-8 shadow-2xl group overflow-hidden"
+            >
+              {/* Corner accents */}
+              <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#ff4655]" />
+              <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-zinc-700" />
+              
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-16 h-16 bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0 relative overflow-hidden group-hover:border-[#ff4655]/50 transition-colors">
+                  <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.2]" />
+                  <UserIcon className="w-8 h-8 text-zinc-500 group-hover:text-[#ff4655] transition-colors relative z-10" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black uppercase tracking-wider text-white font-teko">
+                    {displayName}
+                  </h2>
+                  <p className="text-[#ff4655] text-xs font-bold tracking-[0.2em] uppercase">{rpgProfile?.title || 'ROOKIE'}</p>
+                </div>
               </div>
-              <ShoppingCart className="w-5 h-5 text-[#fca5a5] hover:text-white cursor-pointer transition-colors" />
-              <div className="relative">
-                <Bell className="w-5 h-5 text-[#fca5a5] hover:text-white cursor-pointer transition-colors" />
-                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#ff4655] rounded-full border-2 border-[#4d1723]" />
+              
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between text-[10px] uppercase tracking-[0.2em] font-bold mb-2">
+                    <span className="text-[#ff4655]">Level {currentLevel}</span>
+                    <span className="text-zinc-500">{currentExp} / {nextLevelExp} EXP</span>
+                  </div>
+                  <div className="h-1 bg-zinc-950 overflow-hidden relative">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercent}%` }}
+                      className="absolute inset-y-0 left-0 bg-[#ff4655] shadow-[0_0_10px_rgba(255,70,85,0.8)]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-zinc-950/80 border border-zinc-800/50 p-4">
+                    <Zap className="w-4 h-4 text-yellow-500 mb-2 opacity-50" />
+                    <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Streak</div>
+                    <div className="text-2xl font-black text-white font-teko mt-1">{rpgProfile?.current_streak || 0}</div>
+                  </div>
+                  <div className="bg-zinc-950/80 border border-zinc-800/50 p-4">
+                    <Target className="w-4 h-4 text-cyan-500 mb-2 opacity-50" />
+                    <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Multiplier</div>
+                    <div className="text-2xl font-black text-white font-teko mt-1">{rpgProfile?.multiplier || 1.0}x</div>
+                  </div>
+                </div>
               </div>
-            </div>
+            </motion.div>
+
+            {/* RADAR PLACEHOLDER */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800/50 relative p-8 shadow-2xl min-h-[300px] flex flex-col items-center justify-center text-center overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.05]" />
+              <Activity className="w-12 h-12 text-[#ff4655]/20 mb-4 animate-pulse" />
+              <h3 className="font-teko text-3xl uppercase tracking-widest text-zinc-600">Radar Offline</h3>
+              <p className="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mt-2 max-w-[200px]">Waiting for Hexagon Chart deployment in Stage 4.</p>
+            </motion.div>
           </div>
 
-          {/* SCROLLABLE GRID CONTENT */}
-          <div className="flex-1 overflow-y-auto px-10 pb-10 scrollbar-hide">
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              
-              {/* LEFT & CENTER SECTIONS (Spans 2 columns) */}
-              <div className="xl:col-span-2 flex flex-col gap-6">
-                
-                {/* BIG HERO BANNER - ACTIVE MISSION */}
-                <div className="bg-gradient-to-r from-[#ff4655] to-[#cc2936] rounded-3xl p-8 relative overflow-hidden shadow-2xl min-h-[280px] flex flex-col justify-end group cursor-pointer border border-white/10">
-                  <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop')] opacity-20 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#2b0c13]/90 via-[#2b0c13]/40 to-transparent" />
-                  
-                  <div className="relative z-10">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-white text-xs font-bold uppercase tracking-wider mb-4 border border-white/30">
-                      <Zap className="w-3 h-3 text-yellow-300" /> Active Operation
+          {/* MIDDLE: AI ENGINE (Landing Page Card Style) */}
+          <div className="xl:col-span-6 flex flex-col gap-6">
+            {!generatedQuest ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-zinc-900/40 backdrop-blur-md border border-zinc-800 p-1 rounded-3xl relative"
+              >
+                {/* Neon Border Glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#ff4655]/20 to-transparent blur-xl -z-10 rounded-3xl opacity-50" />
+
+                <div className="bg-zinc-950 rounded-[1.4rem] p-6 sm:p-8 relative overflow-hidden">
+                  {isProcessing && (
+                    <div className="absolute inset-0 z-50 bg-zinc-950/90 backdrop-blur-md flex flex-col items-center justify-center space-y-6">
+                      <div className="relative">
+                        <Cpu className="w-16 h-16 text-[#ff4655] animate-pulse" />
+                        <div className="absolute inset-0 w-full h-full border-[2px] border-[#ff4655] border-dashed rounded-full animate-[spin_3s_linear_infinite]" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[#ff4655] font-teko text-3xl tracking-widest uppercase animate-pulse">Initializing Neural Link...</p>
+                        <p className="text-zinc-500 text-[10px] tracking-[0.3em] uppercase">Generating Gamified Protocol</p>
+                      </div>
                     </div>
-                    <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-none mb-2 shadow-black/50">
-                      DEFEAT TUTORIAL HELL
-                    </h1>
-                    <p className="text-white/80 max-w-md text-sm font-medium">
-                      Master React Native animations and deploy your first app to escape the infinite loop of tutorials.
-                    </p>
-                    <div className="mt-6 flex items-center gap-4">
-                      <div className="flex -space-x-3">
-                        <div className="w-8 h-8 rounded-full border-2 border-[#ff4655] bg-zinc-800" />
-                        <div className="w-8 h-8 rounded-full border-2 border-[#ff4655] bg-zinc-700" />
-                        <div className="w-8 h-8 rounded-full border-2 border-[#ff4655] bg-zinc-600" />
-                      </div>
-                      <span className="text-white text-xs font-bold">+53 Reviews</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* COMMAND CENTER & GENERATOR */}
-                <div>
-                  <div className="flex justify-between items-end mb-4">
-                    <h2 className="text-2xl font-bold text-white tracking-wide">Command Center</h2>
-                    <span className="text-[#fca5a5] text-sm hover:text-white cursor-pointer transition-colors flex items-center gap-1">
-                      See More <ArrowRight className="w-4 h-4" />
-                    </span>
-                  </div>
-                  
-                  {!generatedQuest ? (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-[#2b0c13]/40 backdrop-blur-xl border border-[#fca5a5]/10 rounded-3xl p-6 shadow-xl relative"
-                    >
-                      {isProcessing && (
-                        <div className="absolute inset-0 z-50 bg-[#2b0c13]/80 backdrop-blur-sm rounded-3xl flex flex-col items-center justify-center space-y-4">
-                          <Cpu className="w-12 h-12 text-[#ff4655] animate-pulse" />
-                          <p className="text-white font-bold tracking-widest uppercase animate-pulse">Initializing AI Core...</p>
-                        </div>
-                      )}
-
-                      <div className="flex gap-2 bg-[#1d0a0f] p-1 rounded-2xl mb-4 w-fit">
-                        <button
-                          type="button"
-                          onClick={() => setInputType('text')}
-                          className={`px-6 py-2 rounded-xl flex items-center gap-2 text-xs font-bold uppercase tracking-wider transition-all ${inputType === 'text' ? 'bg-[#ff4655] text-white shadow-lg' : 'text-[#fca5a5] hover:text-white'}`}
-                        >
-                          <Type className="w-3 h-3" /> Raw Intel
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setInputType('url')}
-                          className={`px-6 py-2 rounded-xl flex items-center gap-2 text-xs font-bold uppercase tracking-wider transition-all ${inputType === 'url' ? 'bg-[#ff4655] text-white shadow-lg' : 'text-[#fca5a5] hover:text-white'}`}
-                        >
-                          <LinkIcon className="w-3 h-3" /> Data Link
-                        </button>
-                      </div>
-
-                      <form onSubmit={handleGenerate} className="space-y-4">
-                        {inputType === 'text' ? (
-                          <Textarea
-                            value={payload}
-                            onChange={(e) => setPayload(e.target.value)}
-                            placeholder="Describe your objective. Example: 'Learn framer motion gestures this weekend.'"
-                            className="min-h-[120px] bg-[#1d0a0f]/50 border-transparent focus-visible:ring-[#ff4655] text-white placeholder:text-[#fca5a5]/40 text-sm rounded-2xl resize-none"
-                          />
-                        ) : (
-                          <Input
-                            value={payload}
-                            onChange={(e) => setPayload(e.target.value)}
-                            placeholder="Paste a URL (Documentation, Article, GitHub)..."
-                            className="h-14 bg-[#1d0a0f]/50 border-transparent focus-visible:ring-[#ff4655] text-white placeholder:text-[#fca5a5]/40 text-sm rounded-2xl"
-                          />
-                        )}
-
-                        <div className="flex justify-end">
-                          <Button 
-                            type="submit" 
-                            disabled={!payload.trim() || isProcessing}
-                            className="h-12 px-8 rounded-xl bg-white text-[#2b0c13] hover:bg-[#fca5a5] font-bold uppercase tracking-widest transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-                          >
-                            <Sparkles className="w-4 h-4 mr-2" /> Generate Mission
-                          </Button>
-                        </div>
-                      </form>
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="bg-[#2b0c13]/60 backdrop-blur-xl border border-[#ff4655]/30 rounded-3xl p-6 shadow-2xl relative overflow-hidden"
-                    >
-                      <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#ff4655]/20 blur-3xl rounded-full pointer-events-none" />
-                      
-                      <div className="flex justify-between items-start mb-6">
-                        <div>
-                          <div className="flex gap-2 mb-2">
-                            <span className="px-2 py-1 bg-[#ff4655]/20 text-[#ff4655] text-[10px] font-black uppercase tracking-widest rounded">LVL {generatedQuest.quest.difficulty}</span>
-                            <span className="px-2 py-1 bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded">{generatedQuest.quest.category}</span>
-                          </div>
-                          <h3 className="text-2xl font-black text-white tracking-tight">{generatedQuest.quest.title}</h3>
-                          <p className="text-[#fca5a5] text-sm mt-1 max-w-xl">{generatedQuest.quest.description}</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-3xl font-black text-white">{generatedQuest.quest.estimated_time_minutes}</div>
-                          <div className="text-[10px] text-[#fca5a5] uppercase tracking-widest font-bold">Minutes</div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 mb-6 max-h-[300px] overflow-y-auto scrollbar-hide pr-2">
-                        {generatedQuest.steps.map((step) => (
-                          <div key={step.order_index} className="bg-[#1d0a0f]/80 p-4 rounded-2xl flex gap-4 border border-white/5 hover:border-[#ff4655]/50 transition-colors">
-                            <div className="w-8 h-8 rounded-full bg-[#ff4655] text-white flex items-center justify-center font-black shrink-0">
-                              {step.order_index}
-                            </div>
-                            <div>
-                              <h4 className="text-white font-bold">{step.title}</h4>
-                              <p className="text-[#fca5a5] text-xs mt-1 leading-relaxed">{step.instruction}</p>
-                              <div className="mt-2 text-[10px] font-mono text-[#ff4655] flex items-center gap-1 bg-[#ff4655]/10 px-2 py-1 rounded inline-flex">
-                                <ShieldAlert className="w-3 h-3" /> AI Verify: {step.ai_validation_prompt}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="flex gap-4">
-                        <Button
-                          onClick={() => setGeneratedQuest(null)}
-                          variant="ghost"
-                          className="flex-1 h-12 rounded-xl text-[#fca5a5] hover:text-white hover:bg-white/10 font-bold tracking-widest uppercase"
-                        >
-                          Abort
-                        </Button>
-                        <Button
-                          onClick={handleAcceptMission}
-                          disabled={isAccepting}
-                          className="flex-[2] h-12 rounded-xl bg-[#ff4655] text-white hover:bg-[#cc2936] font-bold tracking-widest uppercase shadow-[0_0_20px_rgba(255,70,85,0.4)]"
-                        >
-                          {isAccepting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Accept Mission'}
-                        </Button>
-                      </div>
-                    </motion.div>
                   )}
-                </div>
 
-              </div>
-
-              {/* RIGHT COLUMN (Stats & Sidebar combined) */}
-              <div className="flex flex-col gap-6">
-                
-                {/* YOUR STATISTIC CARD */}
-                <div>
-                  <div className="flex justify-between items-end mb-4">
-                    <h2 className="text-2xl font-bold text-white tracking-wide">Your Statistic</h2>
-                    <span className="text-[#fca5a5] text-sm hover:text-white cursor-pointer transition-colors flex items-center gap-1">
-                      <ArrowRight className="w-4 h-4" />
-                    </span>
+                  <div className="flex p-1.5 gap-1.5 bg-zinc-900 rounded-xl mb-6 w-fit">
+                    <button
+                      type="button"
+                      onClick={() => setInputType('text')}
+                      className={`px-6 py-2.5 rounded-lg flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] transition-all duration-300 ${inputType === 'text' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                      <Type className="w-4 h-4" /> Raw Intel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInputType('url')}
+                      className={`px-6 py-2.5 rounded-lg flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] transition-all duration-300 ${inputType === 'url' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                      <LinkIcon className="w-4 h-4" /> Data Link
+                    </button>
                   </div>
 
-                  <div className="bg-gradient-to-b from-[#2b0c13] to-[#1d0a0f] rounded-3xl p-6 shadow-xl relative overflow-hidden border border-white/5 h-[340px] flex flex-col items-center justify-center group cursor-pointer">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#ff4655]/10 blur-2xl rounded-full" />
-                    
-                    {/* Abstract Abstract Shape representing Stats */}
-                    <div className="relative w-48 h-48 mb-4">
-                      <div className="absolute inset-0 bg-gradient-to-tr from-[#ff4655] to-purple-500 rounded-[40%_60%_70%_30%/40%_50%_60%_50%] animate-[spin_8s_linear_infinite] opacity-50 mix-blend-screen" />
-                      <div className="absolute inset-2 bg-gradient-to-bl from-orange-500 to-[#ff4655] rounded-[60%_40%_30%_70%/60%_30%_70%_40%] animate-[spin_12s_linear_infinite_reverse] opacity-50 mix-blend-screen" />
-                      <div className="absolute inset-0 flex flex-col items-center justify-center z-10 drop-shadow-xl">
-                        <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Total EXP</span>
-                        <span className="text-4xl font-black text-white">{rpgProfile?.total_exp || 0}</span>
-                      </div>
+                  <form onSubmit={handleGenerate} className="space-y-6">
+                    <div className="relative group">
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#ff4655] to-purple-600 rounded-xl blur opacity-0 group-focus-within:opacity-30 transition duration-500" />
+                      {inputType === 'text' ? (
+                        <Textarea
+                          value={payload}
+                          onChange={(e) => setPayload(e.target.value)}
+                          placeholder="Describe your objective. (e.g. 'I want to master Python loops tonight')"
+                          className="relative min-h-[160px] bg-zinc-950 border-zinc-800 focus-visible:ring-0 focus-visible:border-transparent text-white text-base resize-none rounded-xl p-4 font-mono text-sm leading-relaxed"
+                        />
+                      ) : (
+                        <Input
+                          value={payload}
+                          onChange={(e) => setPayload(e.target.value)}
+                          placeholder="Paste a URL (Documentation, Video, Article)..."
+                          className="relative h-16 bg-zinc-950 border-zinc-800 focus-visible:ring-0 focus-visible:border-transparent text-white text-base rounded-xl px-4 font-mono text-sm"
+                        />
+                      )}
                     </div>
 
-                    <div className="flex w-full justify-between px-4 mt-auto">
-                      <div className="text-center">
-                        <div className="w-10 h-10 rounded-full bg-[#ff4655]/20 flex items-center justify-center mx-auto mb-2">
-                          <Activity className="w-5 h-5 text-[#ff4655]" />
-                        </div>
-                        <div className="text-white font-bold">{rpgProfile?.level || 1}</div>
-                        <div className="text-[10px] text-[#fca5a5] uppercase">Level</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-2">
-                          <Target className="w-5 h-5 text-purple-400" />
-                        </div>
-                        <div className="text-white font-bold">{rpgProfile?.multiplier || 1.0}x</div>
-                        <div className="text-[10px] text-[#fca5a5] uppercase">Multiplier</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center mx-auto mb-2">
-                          <Zap className="w-5 h-5 text-orange-400" />
-                        </div>
-                        <div className="text-white font-bold">{rpgProfile?.current_streak || 0}</div>
-                        <div className="text-[10px] text-[#fca5a5] uppercase">Day Streak</div>
-                      </div>
-                    </div>
-                  </div>
+                    <Button 
+                      type="submit" 
+                      disabled={!payload.trim() || isProcessing}
+                      className="w-full h-16 rounded-xl bg-[#ff4655] hover:bg-[#ff4655]/90 text-white font-teko text-2xl tracking-widest uppercase group relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,70,85,0.3)] disabled:opacity-50 disabled:hover:shadow-none"
+                    >
+                      <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+                      <span className="relative flex items-center justify-center gap-3">
+                        <Sparkles className="w-6 h-6" /> Extract Mission Protocol
+                      </span>
+                    </Button>
+                  </form>
                 </div>
-
-                {/* MINI GUILD / FRIENDS SIDEBAR (Internal column) */}
-                <div className="flex-1 bg-[#2b0c13]/50 rounded-3xl p-4 border border-white/5 flex flex-col">
-                  <div className="flex justify-between items-center mb-4 px-2">
-                    <h3 className="text-white font-bold tracking-wide">Guild Activity</h3>
-                    <span className="w-5 h-5 rounded-full bg-[#ff4655] text-white text-[10px] flex items-center justify-center font-bold">3</span>
-                  </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-zinc-900/40 backdrop-blur-md border border-[#ff4655]/30 p-1 rounded-3xl relative shadow-[0_0_50px_rgba(255,70,85,0.1)]"
+              >
+                <div className="bg-zinc-950 rounded-[1.4rem] p-6 sm:p-8 relative overflow-hidden">
                   
-                  <div className="flex-1 space-y-4 overflow-y-auto scrollbar-hide px-2">
-                    {[1,2,3].map((i) => (
-                      <div key={i} className="flex items-center gap-3 group cursor-pointer">
-                        <div className="relative">
-                          <div className={`w-10 h-10 rounded-xl bg-zinc-800 border-2 ${i === 1 ? 'border-green-500' : 'border-transparent'} group-hover:border-[#ff4655] transition-colors`} />
-                          {i === 1 && <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[#2b0c13]" />}
+                  {/* Mission Header */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start mb-8 gap-4 border-b border-zinc-800 pb-8">
+                    <div>
+                      <div className="flex gap-2 mb-3">
+                        <span className="px-3 py-1 bg-[#ff4655]/10 border border-[#ff4655]/30 text-[#ff4655] text-[10px] font-black uppercase tracking-[0.2em] rounded-md">LVL {generatedQuest.quest.difficulty}</span>
+                        <span className="px-3 py-1 bg-zinc-800 text-zinc-300 text-[10px] font-black uppercase tracking-[0.2em] rounded-md">{generatedQuest.quest.category}</span>
+                      </div>
+                      <h2 className="text-4xl font-black text-white font-teko uppercase tracking-wide leading-none">{generatedQuest.quest.title}</h2>
+                      <p className="text-zinc-400 text-sm mt-3 font-mono leading-relaxed">{generatedQuest.quest.description}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-4xl font-black text-white font-teko">{generatedQuest.quest.estimated_time_minutes}</div>
+                      <div className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-bold">Minutes</div>
+                    </div>
+                  </div>
+
+                  {/* Steps Timeline */}
+                  <div className="space-y-4 mb-8">
+                    {generatedQuest.steps.map((step) => (
+                      <div key={step.order_index} className="flex gap-4 group/step">
+                        <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 group-hover/step:border-[#ff4655] group-hover/step:bg-[#ff4655]/10 transition-colors">
+                          <span className="font-teko text-2xl text-zinc-500 group-hover/step:text-[#ff4655]">{step.order_index}</span>
                         </div>
-                        <div>
-                          <div className="text-white text-sm font-bold group-hover:text-[#ff4655] transition-colors">Agent_{i}9X</div>
-                          <div className="text-[#fca5a5] text-xs">Completed Mission</div>
+                        <div className="flex-1 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800/50 group-hover/step:border-zinc-700 transition-colors">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="text-white font-bold tracking-wide uppercase text-sm">{step.title}</h4>
+                            <span className="text-[10px] text-zinc-500 font-mono bg-zinc-950 px-2 py-1 rounded">{Math.round(step.estimated_time_seconds / 60)}m</span>
+                          </div>
+                          <p className="text-zinc-400 text-sm leading-relaxed mb-3">{step.instruction}</p>
+                          <div className="inline-flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 bg-cyan-400/10 border border-cyan-400/20 px-2 py-1.5 rounded-md">
+                            <ShieldAlert className="w-3 h-3" /> VERIFY: {step.ai_validation_prompt}
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                </div>
 
+                  {/* Action Buttons */}
+                  <div className="flex gap-4 pt-4 border-t border-zinc-800">
+                    <Button
+                      onClick={() => setGeneratedQuest(null)}
+                      variant="outline"
+                      className="flex-1 h-14 rounded-xl border-zinc-700 bg-transparent text-zinc-400 hover:text-white hover:bg-zinc-800 font-bold tracking-[0.1em] uppercase"
+                    >
+                      Abort
+                    </Button>
+                    <Button
+                      onClick={handleAcceptMission}
+                      disabled={isAccepting}
+                      className="flex-[2] h-14 rounded-xl bg-[#ff4655] hover:bg-[#ff4655]/90 text-white font-teko text-2xl tracking-widest uppercase transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,70,85,0.4)]"
+                    >
+                      {isAccepting ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Crosshair className="w-5 h-5 mr-2" /> Accept Mission</>}
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* RIGHT: SYSTEM LOGS & LEADERBOARD */}
+          <div className="xl:col-span-3 flex flex-col gap-6">
+            
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-zinc-900/50 backdrop-blur-xl border-t border-r border-zinc-800/50 rounded-none p-6 shadow-2xl h-[300px] flex flex-col relative"
+            >
+              <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#ff4655]" />
+              <div className="flex items-center gap-2 mb-6">
+                <Trophy className="w-4 h-4 text-zinc-400" />
+                <h3 className="font-bold text-white uppercase tracking-[0.2em] text-xs">Active Operations</h3>
               </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* RIGHTMOST THIN SIDEBAR (Friends Icons) */}
-        <div className="w-20 bg-[#2b0c13] border-l border-[#1d0a0f] flex flex-col items-center py-8 justify-start gap-4 z-20 overflow-y-auto scrollbar-hide">
-          <div className="w-10 h-10 rounded-full bg-[#ff4655] flex items-center justify-center text-white font-black shrink-0 shadow-lg">
-            {username.charAt(0)}
-          </div>
-          <div className="w-full h-px bg-white/10 my-2" />
-          
-          {[
-            { c: 'border-green-500', st: 'In Game' },
-            { c: 'border-transparent', st: '' },
-            { c: 'border-transparent', st: '' },
-            { c: 'border-yellow-500', st: '' },
-            { c: 'border-transparent', st: '' },
-          ].map((u, idx) => (
-            <div key={idx} className="relative group cursor-pointer mb-2">
-              <div className={`w-10 h-10 rounded-xl bg-[#4d1723] border-2 ${u.c} hover:border-[#ff4655] transition-colors`} />
-              {u.st && (
-                <div className="absolute -bottom-2 inset-x-0 mx-auto w-fit px-1 py-0.5 bg-green-500 rounded text-[8px] font-bold text-white uppercase scale-0 group-hover:scale-100 transition-transform origin-bottom">
-                  {u.st}
-                </div>
-              )}
-            </div>
-          ))}
-          
-          <div className="w-10 h-10 rounded-full border border-dashed border-white/20 flex items-center justify-center text-white/50 hover:text-white hover:border-white/50 transition-colors cursor-pointer mt-auto">
-            <Plus className="w-4 h-4" />
-          </div>
-        </div>
+              <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50">
+                <Crosshair className="w-8 h-8 text-zinc-600 mb-4" />
+                <p className="text-zinc-500 text-[10px] uppercase tracking-[0.2em] font-bold">No Active Missions</p>
+              </div>
+            </motion.div>
 
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800/50 p-6 shadow-2xl flex-1 flex flex-col relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.05]" />
+              <div className="flex items-center gap-2 mb-6 relative z-10">
+                <Activity className="w-4 h-4 text-[#ff4655]" />
+                <h3 className="font-bold text-white uppercase tracking-[0.2em] text-xs">System Terminal</h3>
+              </div>
+              
+              <div className="flex-1 relative z-10">
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-zinc-900/50 pointer-events-none z-10" />
+                <div className="space-y-3 font-mono text-[10px] leading-relaxed">
+                  <p className="text-zinc-500">[{new Date().toLocaleTimeString()}] <span className="text-green-500">SYS_OK</span> Auth verified for {displayName}.</p>
+                  <p className="text-zinc-500">[{new Date().toLocaleTimeString()}] <span className="text-cyan-500">NET_OK</span> Connected to global mesh.</p>
+                  <p className="text-zinc-500">[{new Date().toLocaleTimeString()}] <span className="text-[#ff4655]">AI_READY</span> Groq tactical core initialized.</p>
+                  <p className="text-zinc-600 animate-pulse">_ waiting for input sequence...</p>
+                  
+                  {isProcessing && (
+                    <p className="text-yellow-500 mt-4">
+                      {'> '}EXTRACTING PROTOCOL FROM INTEL...
+                    </p>
+                  )}
+                  {generatedQuest && (
+                    <p className="text-green-400 mt-4">
+                      {'> '}PROTOCOL GENERATED SUCCESSFULLY. AWAITING CONFIRMATION.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+          
+        </div>
       </div>
     </div>
   );

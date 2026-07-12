@@ -90,13 +90,21 @@ export async function POST(req: Request) {
           content: `Generate a quest from the following input:\n\n${rawContent}`,
         },
       ],
-      model: 'llama3-8b-8192',
+      model: 'llama-3.1-8b-instant', // Highly efficient and native JSON format support
       temperature: 0.2, // Low temp for highly structured, predictable JSON
       response_format: { type: 'json_object' },
     });
 
-    const aiResponse = completion.choices[0]?.message?.content || '{}';
+    let aiResponse = completion.choices[0]?.message?.content || '{}';
     
+    // Attempt to strip markdown blocks if the model weirdly outputs them despite JSON mode
+    if (aiResponse.includes('```')) {
+      const match = aiResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (match && match[1]) {
+        aiResponse = match[1];
+      }
+    }
+
     // Attempt to parse to ensure it's valid JSON before returning
     const parsedJson = JSON.parse(aiResponse);
 
@@ -109,3 +117,4 @@ export async function POST(req: Request) {
     );
   }
 }
+
