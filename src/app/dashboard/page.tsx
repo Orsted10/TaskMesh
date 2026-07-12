@@ -167,7 +167,7 @@ export default function Dashboard() {
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative w-full h-[350px] bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden group shadow-[0_0_50px_rgba(255,70,85,0.1)]"
+        className="relative w-full min-h-[350px] bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden group shadow-[0_0_50px_rgba(255,70,85,0.1)] flex flex-col justify-center"
       >
         {/* Background Image / Overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/90 to-zinc-950/40 z-10" />
@@ -181,7 +181,7 @@ export default function Dashboard() {
         <div className="absolute inset-0 z-10 opacity-30 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
         {/* Content */}
-        <div className="relative z-20 h-full p-8 md:p-14 flex flex-col justify-center max-w-3xl">
+        <div className="relative z-20 h-full p-8 md:p-14 flex flex-col justify-center max-w-4xl">
           <div className="inline-flex items-center gap-3 mb-6 bg-zinc-950/50 w-fit px-4 py-2 rounded-full border border-zinc-800/80 backdrop-blur-sm">
             <span className="w-2 h-2 bg-[#ff4655] rounded-full animate-pulse shadow-[0_0_10px_#ff4655]" />
             <span className="text-zinc-300 text-xs font-bold tracking-[0.2em] uppercase">
@@ -189,7 +189,7 @@ export default function Dashboard() {
             </span>
           </div>
           
-          <h1 className="text-6xl md:text-8xl font-teko text-white uppercase leading-none drop-shadow-2xl mb-4 tracking-wide group-hover:text-[#ff4655] transition-colors duration-500">
+          <h1 className="text-6xl md:text-8xl font-teko text-white uppercase leading-none drop-shadow-2xl mb-6 tracking-wide group-hover:text-[#ff4655] transition-colors duration-500 line-clamp-3">
             {featuredMission ? featuredMission.quests?.title : 'DEFEAT TUTORIAL HELL'}
           </h1>
           
