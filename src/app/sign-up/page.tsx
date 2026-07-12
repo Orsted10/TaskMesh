@@ -17,11 +17,47 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
 
+  // Password strength logic
+  const calculateStrength = (pass: string) => {
+    let score = 0
+    if (pass.length >= 8) score++
+    if (/[A-Z]/.test(pass)) score++
+    if (/[a-z]/.test(pass)) score++
+    if (/[0-9]/.test(pass)) score++
+    if (/[^A-Za-z0-9]/.test(pass)) score++
+    return score
+  }
+
+  const passwordScore = calculateStrength(password)
+  const strengthLabels = ["DANGEROUS", "WEAK", "MODERATE", "STRONG", "SECURE", "UNBREAKABLE"]
+  const strengthColors = ["bg-red-500", "bg-red-400", "bg-orange-500", "bg-yellow-400", "bg-lime-400", "bg-green-500"]
+
+  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Format as DD/MM/YYYY
+    let val = e.target.value.replace(/\D/g, '')
+    if (val.length > 8) val = val.substring(0, 8)
+    
+    if (val.length > 4) {
+      val = val.substring(0, 2) + '/' + val.substring(2, 4) + '/' + val.substring(4)
+    } else if (val.length > 2) {
+      val = val.substring(0, 2) + '/' + val.substring(2)
+    }
+    setDob(val)
+  }
+
   const router = useRouter()
   const supabase = createClient()
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (passwordScore < 5) {
+      toast.error("Password is not strong enough. Make it UNBREAKABLE.")
+      return
+    }
+    if (dob.length !== 10) {
+      toast.error("Invalid Date of Birth format. Use DD/MM/YYYY.")
+      return
+    }
     setLoading(true)
     
     const { error } = await supabase.auth.signUp({
@@ -108,7 +144,7 @@ export default function SignUpPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full bg-background border border-muted/30 p-3 pl-10 font-sans text-foreground focus:outline-none focus:border-primary transition-colors clip-angled-sm"
-                  placeholder="John Doe"
+                  placeholder="Ankan Bhattacharjee"
                 />
               </div>
             </div>
@@ -118,10 +154,12 @@ export default function SignUpPage() {
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input 
-                  type="date" 
+                  type="text" 
                   required
                   value={dob}
-                  onChange={(e) => setDob(e.target.value)}
+                  onChange={handleDobChange}
+                  maxLength={10}
+                  placeholder="DD/MM/YYYY"
                   className="w-full bg-background border border-muted/30 p-3 pl-10 font-sans text-foreground focus:outline-none focus:border-primary transition-colors clip-angled-sm"
                 />
               </div>
@@ -137,7 +175,7 @@ export default function SignUpPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-background border border-muted/30 p-3 pl-10 font-sans text-foreground focus:outline-none focus:border-primary transition-colors clip-angled-sm"
-                  placeholder="agent@taskmesh.com"
+                  placeholder="ankanb2006@gmail.com"
                 />
               </div>
             </div>
@@ -155,13 +193,46 @@ export default function SignUpPage() {
                   placeholder="••••••••"
                 />
               </div>
+
+              {/* Password Strength Meter */}
+              {password.length > 0 && (
+                <div className="mt-2 space-y-2">
+                  <div className="flex justify-between items-center text-xs font-teko uppercase tracking-widest">
+                    <span className="text-muted-foreground">Strength:</span>
+                    <span className={`font-bold ${passwordScore === 5 ? 'text-green-500' : 'text-primary'}`}>
+                      {strengthLabels[passwordScore]}
+                    </span>
+                  </div>
+                  <div className="flex gap-1 h-2 w-full">
+                    {[1, 2, 3, 4, 5].map((level) => (
+                      <div 
+                        key={level} 
+                        className={`flex-1 clip-angled-sm transition-all duration-300 ${
+                          passwordScore >= level ? strengthColors[passwordScore] : 'bg-muted/20'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground font-sans uppercase flex flex-wrap gap-2 mt-1">
+                    <span className={password.length >= 8 ? "text-green-500" : ""}>✓ 8+ Chars</span>
+                    <span className={/[A-Z]/.test(password) ? "text-green-500" : ""}>✓ Uppercase</span>
+                    <span className={/[a-z]/.test(password) ? "text-green-500" : ""}>✓ Lowercase</span>
+                    <span className={/[0-9]/.test(password) ? "text-green-500" : ""}>✓ Number</span>
+                    <span className={/[^A-Za-z0-9]/.test(password) ? "text-green-500" : ""}>✓ Symbol</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <motion.button 
               whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              disabled={loading}
-              className="w-full relative overflow-hidden bg-primary text-background p-4 font-teko text-3xl font-bold uppercase tracking-widest transition-all hover:bg-foreground hover:text-background clip-angled-br shadow-[0_5px_15px_rgba(255,70,85,0.4)] cursor-none disabled:opacity-50 border-none mt-4"
+              whileTap={{ scale: passwordScore === 5 ? 0.98 : 1 }}
+              disabled={loading || passwordScore < 5}
+              className={`w-full relative overflow-hidden p-4 font-teko text-3xl font-bold uppercase tracking-widest transition-all clip-angled-br cursor-none border-none mt-4 ${
+                passwordScore === 5 
+                ? "bg-primary text-background hover:bg-foreground hover:text-background shadow-[0_5px_15px_rgba(255,70,85,0.4)]" 
+                : "bg-muted/30 text-muted-foreground opacity-50 cursor-not-allowed"
+              }`}
             >
               <span className="relative z-10 flex items-center justify-center gap-3">
                 {loading ? "ENCRYPTING..." : "CREATE PROFILE"}
