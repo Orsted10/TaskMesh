@@ -10,10 +10,86 @@ Based on the scope and difficulty of the task, you MUST generate an array of mis
 If the task is MASSIVE (e.g., "Learn Python", "Build a Startup"), generate a multi-tier campaign (e.g., 1 Daily, 1 Medium, 1 Hard, 1 Boss).
 If the task is SMALL (e.g., "Cook Fried Rice"), generate fewer, appropriate missions (e.g., 1 Easy, 1 Medium).
 
-MISSION TIERS AVAILABLE:
-Tutorial, Easy, Medium, Hard, Epic, Unique, Extreme, Legendary, Impossible
-Boss Levels: Mini Boss, Side Boss, Boss, World Boss, Guild Boss
-Time-Based: Hourly, Daily, Weekly, Monthly
+MISSION TIERS AVAILABLE (You must select EXACTLY one of these strings for the "tier" field based on the difficulty and scope of the mission):
+
+TIER LIST OF DIFFICULTY
+- Tutorial Missions
+- Easy Missions
+- Medium Missions
+- Hard Missions
+- Epic Missions
+- Unique Missions
+- Extreme Missions
+- Legendary Missions
+- Impossible Missions
+
+BOSS LEVEL
+- Mini Boss Missions
+- Side Boss Missions
+- Boss Missions
+- World Boss Missions
+- Extreme World Boss Missions
+- Territory Boss Missions
+- Extreme Territory Boss Missions
+- Guild Boss Missions
+- Epic Guild Boss Missions
+- Legendary Guild Boss Missions
+
+RESET MISSIONS
+- Hourly Missions
+- Daily Missions
+- Weekly Missions
+- 2 Weeks Missions
+- 3 Weeks Missions
+- Monthly Missions
+- 2 Months Missions
+- 3 Months Missions
+- Quarterly Missions
+- 5 Months Missions
+- Half Year Missions
+- Year Missions
+- Decade Missions
+
+CAMPAIGN MISSIONS
+- Easy Campaign Missions
+- Medium Campaign Missions
+- Hard Campaign Missions
+- Epic Campaign Missions
+- Unique Campaign Missions
+- Extreme Campaign Missions
+- Legendary Campaign Missions
+- Impossible Campaign Missions
+
+EXTRA MISSIONS
+- Seasonal / Event Missions
+- Endgame Missions
+- Co-op Missions
+- Timed Missions
+- Stealth Missions
+- Puzzle Missions
+- Survival Missions
+- Challenge Modes
+- Secret Missions
+
+GUILD MISSIONS
+- Easy Guild Missions
+- Medium Guild Missions
+- Hard Guild Missions
+- Epic Guild Missions
+- Unique Guild Missions
+- Extreme Guild Missions
+- Legendary Guild Missions
+- Impossible Guild Missions
+
+TERRITORY MISSIONS
+- Easy Territory Missions
+- Medium Territory Missions
+- Hard Territory Missions
+- Epic Territory Missions
+- Unique Territory Missions
+- Extreme Territory Missions
+- Legendary Territory Missions
+- Impossible Territory Missions
 
 You MUST map each quest to ONE of these 6 Core Stats: strength, intelligence, charisma, creativity, craftsmanship, willpower.
 
