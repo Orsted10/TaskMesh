@@ -82,14 +82,16 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
         .eq('quest_id', mission.id)
         .eq('user_id', user!.id);
         
-      // 2. Add EXP, Gold, and Specific Skills
+      // 2. Add EXP, Gold, Shine, Skillpoints, and Specific Skills
       const expReward = mission.rewards?.xp || (mission.difficulty * 100);
       const goldReward = mission.rewards?.gold || 0;
+      const shineReward = mission.rewards?.shine || 0;
+      const skillpointsReward = mission.rewards?.skillpoints || 0;
       const earnedSkills = mission.rewards?.specific_skills || [];
       
       const { data: profile } = await supabase
         .from('users')
-        .select('total_exp, gold, specific_skills')
+        .select('total_exp, gold, shine, skillpoints, specific_skills')
         .eq('id', user!.id)
         .single();
         
@@ -104,12 +106,14 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
           .update({ 
             total_exp: (profile.total_exp || 0) + expReward,
             gold: (profile.gold || 0) + goldReward,
+            shine: (profile.shine || 0) + shineReward,
+            skillpoints: (profile.skillpoints || 0) + skillpointsReward,
             specific_skills: updatedSkills
           })
           .eq('id', user!.id);
       }
       
-      toast.success('MISSION ACCOMPLISHED', { description: `+${expReward} EXP | +${goldReward} GOLD Gained!` });
+      toast.success('MISSION ACCOMPLISHED', { description: `+${expReward} EXP | +${goldReward} GOLD | +${shineReward} SHINE Gained!` });
       router.push('/dashboard');
     } catch (err) {
       toast.error('Failed to complete mission');
@@ -177,6 +181,12 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
               </span>
               <span className="text-lg font-teko text-white bg-zinc-800/80 px-4 py-1 rounded shadow-inner border border-zinc-700/50">
                 <span className="text-yellow-500">GOLD</span> +{mission.rewards?.gold || 0}
+              </span>
+              <span className="text-lg font-teko text-white bg-zinc-800/80 px-4 py-1 rounded shadow-inner border border-zinc-700/50">
+                <span className="text-purple-400">SHINE</span> +{mission.rewards?.shine || 0}
+              </span>
+              <span className="text-lg font-teko text-white bg-zinc-800/80 px-4 py-1 rounded shadow-inner border border-zinc-700/50">
+                <span className="text-emerald-400">SP</span> +{mission.rewards?.skillpoints || 0}
               </span>
               {mission.rewards?.specific_skills?.map((skill: any, idx: number) => (
                 <span key={idx} className="text-lg font-teko text-white bg-cyan-900/30 px-4 py-1 rounded shadow-inner border border-cyan-700/50">

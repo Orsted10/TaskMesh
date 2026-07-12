@@ -294,7 +294,7 @@ export default function Dashboard() {
                           </span>
                         </div>
                         <span className="text-[10px] font-bold text-yellow-600 dark:text-yellow-500 uppercase tracking-widest flex items-center gap-1">
-                          + {quest.rewards?.xp || 100} EXP | {quest.rewards?.gold || 10} GOLD
+                          + {quest.rewards?.xp || 100} EXP | {quest.rewards?.gold || 10} GOLD | {quest.rewards?.shine || 0} SHINE | {quest.rewards?.skillpoints || 0} SP
                         </span>
                       </div>
                       

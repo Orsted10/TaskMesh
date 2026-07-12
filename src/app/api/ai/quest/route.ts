@@ -108,6 +108,8 @@ You MUST respond in pure, raw JSON format matching this EXACT schema:
       "rewards": {
         "xp": number (100 to 5000 based on tier),
         "gold": number (10 to 1000),
+        "shine": number (1 to 100, rare premium currency),
+        "skillpoints": number (1 to 50, to level up core stats),
         "specific_skills": [{"name": "string (e.g. 'Python', 'Cooking')", "value": number}]
       },
       "steps": [
