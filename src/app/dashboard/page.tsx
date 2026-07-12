@@ -462,7 +462,11 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   activeMissions.map((mission) => (
-                    <div key={mission.id} className="bg-zinc-950/80 border border-zinc-800 p-3 rounded-lg hover:border-[#ff4655]/50 transition-colors group cursor-pointer relative overflow-hidden">
+                    <div 
+                      key={mission.id} 
+                      onClick={() => router.push(`/mission/${mission.quests?.id}`)}
+                      className="bg-zinc-950/80 border border-zinc-800 p-3 rounded-lg hover:border-[#ff4655]/50 transition-colors group cursor-pointer relative overflow-hidden"
+                    >
                       <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#ff4655] opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(255,70,85,0.8)]" />
                       <div className="flex justify-between items-start mb-2 pl-2">
                         <span className="text-[9px] font-bold text-[#ff4655] uppercase tracking-wider bg-[#ff4655]/10 px-1.5 py-0.5 rounded border border-[#ff4655]/20">LVL {mission.quests?.difficulty || 1}</span>

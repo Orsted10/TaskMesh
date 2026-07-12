@@ -61,19 +61,28 @@ export async function POST(req: Request) {
     // Heavy-duty URL Scraper
     if (type === 'url') {
       try {
-        const response = await fetch(payload);
+        const response = await fetch(payload, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          }
+        });
         const html = await response.text();
         const $ = cheerio.load(html);
         
+        const title = $('title').text() || $('meta[property="og:title"]').attr('content') || '';
+        const description = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '';
+
         // Remove junk to save Groq tokens and make it highly efficient
         $('script, style, noscript, iframe, img, svg').remove();
         
-        rawContent = $('body').text().replace(/\s+/g, ' ').trim();
+        let bodyText = $('body').text().replace(/\s+/g, ' ').trim();
         
-        // Truncate to ~4000 chars to save tokens (highly efficient $1 limit optimization)
-        if (rawContent.length > 4000) {
-          rawContent = rawContent.substring(0, 4000) + '...';
+        // Truncate to ~3000 chars to save tokens (highly efficient $1 limit optimization)
+        if (bodyText.length > 3000) {
+          bodyText = bodyText.substring(0, 3000) + '...';
         }
+        
+        rawContent = `URL TITLE: ${title}\nURL DESCRIPTION: ${description}\n\nWEBSITE CONTENT:\n${bodyText}`;
       } catch (err) {
         return NextResponse.json({ error: 'Failed to scrape URL' }, { status: 400 });
       }
