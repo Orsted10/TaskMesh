@@ -44,6 +44,37 @@ export default function Dashboard() {
   const [generatedQuest, setGeneratedQuest] = useState<GeneratedQuest | null>(null);
   const [isAccepting, setIsAccepting] = useState(false);
 
+  const [activeMissions, setActiveMissions] = useState<any[]>([]);
+
+  const fetchActiveMissions = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('user_quest_progress')
+      .select(`
+        id,
+        status,
+        quests (
+          id,
+          title,
+          difficulty,
+          category
+        )
+      `)
+      .eq('user_id', user.id)
+      .eq('status', 'in_progress')
+      .order('started_at', { ascending: false });
+    
+    if (!error && data) {
+      setActiveMissions(data);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchActiveMissions();
+    }
+  }, [user]);
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!payload.trim()) return;
@@ -120,6 +151,7 @@ export default function Dashboard() {
       toast.success('Mission Accepted!', { description: 'Added to your active operations.' });
       setGeneratedQuest(null);
       setPayload('');
+      fetchActiveMissions();
 
     } catch (err: any) {
       toast.error('Failed to accept mission', { description: err.message });
@@ -422,9 +454,24 @@ export default function Dashboard() {
                 <Trophy className="w-4 h-4 text-zinc-400" />
                 <h3 className="font-bold text-white uppercase tracking-[0.2em] text-xs">Active Operations</h3>
               </div>
-              <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50">
-                <Crosshair className="w-8 h-8 text-zinc-600 mb-4" />
-                <p className="text-zinc-500 text-[10px] uppercase tracking-[0.2em] font-bold">No Active Missions</p>
+              <div className="flex-1 overflow-y-auto pr-2 space-y-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-zinc-800 [&::-webkit-scrollbar-track]:bg-transparent">
+                {activeMissions.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center text-center opacity-50 h-full min-h-[150px]">
+                    <Crosshair className="w-8 h-8 text-zinc-600 mb-4" />
+                    <p className="text-zinc-500 text-[10px] uppercase tracking-[0.2em] font-bold">No Active Missions</p>
+                  </div>
+                ) : (
+                  activeMissions.map((mission) => (
+                    <div key={mission.id} className="bg-zinc-950/80 border border-zinc-800 p-3 rounded-lg hover:border-[#ff4655]/50 transition-colors group cursor-pointer relative overflow-hidden">
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#ff4655] opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(255,70,85,0.8)]" />
+                      <div className="flex justify-between items-start mb-2 pl-2">
+                        <span className="text-[9px] font-bold text-[#ff4655] uppercase tracking-wider bg-[#ff4655]/10 px-1.5 py-0.5 rounded border border-[#ff4655]/20">LVL {mission.quests?.difficulty || 1}</span>
+                        <span className="text-[9px] text-zinc-500 uppercase tracking-widest">{mission.quests?.category || 'General'}</span>
+                      </div>
+                      <h4 className="font-teko text-xl text-zinc-200 uppercase leading-none truncate group-hover:text-white transition-colors pl-2">{mission.quests?.title || 'Unknown Protocol'}</h4>
+                    </div>
+                  ))
+                )}
               </div>
             </motion.div>
 
