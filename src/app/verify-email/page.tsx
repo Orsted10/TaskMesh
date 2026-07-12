@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, Suspense } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { motion } from "framer-motion"
 import { Shield, KeyRound, Zap, Target } from "lucide-react"
 import Link from "next/link"
@@ -17,6 +17,35 @@ function VerifyEmailForm() {
   const searchParams = useSearchParams()
   const email = searchParams.get("email") || ""
   const supabase = createClient()
+
+  // Resend OTP logic
+  const [countdown, setCountdown] = useState(60)
+  const [resending, setResending] = useState(false)
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [countdown])
+
+  const handleResend = async () => {
+    if (!email || countdown > 0) return
+    
+    setResending(true)
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+    })
+
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success("New code sent to your email.")
+      setCountdown(60) // Reset timer to 60 seconds
+    }
+    setResending(false)
+  }
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -74,6 +103,24 @@ function VerifyEmailForm() {
           {!loading && <Zap className="w-5 h-5" />}
         </span>
       </motion.button>
+
+      {/* RESEND OTP SECTION */}
+      <div className="pt-4 text-center">
+        {countdown > 0 ? (
+          <p className="text-sm font-sans text-muted-foreground uppercase tracking-wider">
+            Resend transmission in <span className="text-primary font-bold">{countdown}s</span>
+          </p>
+        ) : (
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={resending}
+            className="text-sm font-sans text-primary hover:text-foreground transition-colors uppercase tracking-wider font-bold cursor-none disabled:opacity-50"
+          >
+            {resending ? "TRANSMITTING..." : "RESEND ACCESS CODE"}
+          </button>
+        )}
+      </div>
     </form>
   )
 }
