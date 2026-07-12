@@ -7,10 +7,10 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-zinc-950 flex overflow-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] text-zinc-900 dark:text-zinc-100 flex overflow-hidden transition-colors duration-300">
       {/* Background Grid */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center" />
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] z-0">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center dark:invert-0 invert" />
       </div>
 
       <Sidebar />
@@ -19,7 +19,7 @@ export default function DashboardLayout({
         <Topbar />
         
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto custom-scrollbar bg-zinc-950/50">
+        <main className="flex-1 overflow-y-auto custom-scrollbar bg-gray-50/50 dark:bg-zinc-950/50">
           <div className="p-8">
             {children}
           </div>

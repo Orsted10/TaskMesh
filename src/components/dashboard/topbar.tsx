@@ -2,13 +2,14 @@
 
 import { Bell, Search, User as UserIcon } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export function Topbar() {
   const { user, rpgProfile } = useAuth();
   const displayName = user?.user_metadata?.full_name || rpgProfile?.username || 'AGENT';
 
   return (
-    <div className="h-20 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-30">
+    <div className="h-20 w-full bg-white/50 dark:bg-zinc-950/80 backdrop-blur-md border-b border-gray-200 dark:border-zinc-900 sticky top-0 z-30 px-8 flex items-center justify-between">
       {/* Left side: Global Search */}
       <div className="flex-1 max-w-xl">
         <div className="relative group">
@@ -18,19 +19,20 @@ export function Topbar() {
           <input
             type="text"
             placeholder="QUERY GLOBAL MESH..."
-            className="w-full bg-zinc-900/50 border border-zinc-800 text-white placeholder:text-zinc-600 rounded-lg pl-12 pr-4 py-3 focus:outline-none focus:border-[#ff4655]/50 focus:bg-zinc-900 transition-all font-mono text-xs uppercase tracking-widest"
+            className="w-full bg-gray-100 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-white placeholder:text-zinc-600 rounded-lg pl-12 pr-4 py-3 focus:outline-none focus:border-[#ff4655]/50 focus:bg-zinc-900 transition-all font-mono text-xs uppercase tracking-widest"
           />
         </div>
       </div>
 
       {/* Right side: Actions & Profile */}
       <div className="flex items-center gap-6">
-        <button className="relative text-zinc-500 hover:text-white transition-colors group">
+        <ThemeToggle />
+        <button className="relative text-zinc-500 hover:text-gray-900 dark:hover:text-white transition-colors group">
           <Bell className="w-5 h-5 group-hover:scale-110 transition-transform" />
           <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#ff4655] rounded-full shadow-[0_0_10px_rgba(255,70,85,0.8)]" />
         </button>
 
-        <div className="w-[1px] h-8 bg-zinc-800" />
+        <div className="w-[1px] h-8 bg-gray-200 dark:bg-zinc-800" />
 
         <div className="flex items-center gap-4 cursor-pointer group">
           <div className="text-right hidden sm:block">

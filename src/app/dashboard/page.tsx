@@ -167,33 +167,33 @@ export default function Dashboard() {
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative w-full min-h-[350px] bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden group shadow-[0_0_50px_rgba(255,70,85,0.1)] flex flex-col justify-center"
+        className="relative w-full min-h-[350px] bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-2xl overflow-hidden group shadow-[0_0_50px_rgba(255,70,85,0.05)] dark:shadow-[0_0_50px_rgba(255,70,85,0.1)] flex flex-col justify-center"
       >
         {/* Background Image / Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/90 to-zinc-950/40 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/40 dark:from-zinc-950 dark:via-zinc-950/90 dark:to-zinc-950/40 z-10" />
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-50 group-hover:scale-105 transition-transform duration-[20s] mix-blend-luminosity ease-linear"
+          className="absolute inset-0 bg-cover bg-center opacity-30 dark:opacity-50 group-hover:scale-105 transition-transform duration-[20s] mix-blend-luminosity ease-linear"
           style={{ backgroundImage: `url('${heroBg}')` }}
         />
-        <div className="absolute inset-0 bg-[#ff4655]/10 z-10 mix-blend-overlay" />
+        <div className="absolute inset-0 bg-[#ff4655]/5 dark:bg-[#ff4655]/10 z-10 mix-blend-overlay" />
         
         {/* Animated Cyber Grid */}
         <div className="absolute inset-0 z-10 opacity-30 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
         {/* Content */}
         <div className="relative z-20 h-full p-8 md:p-14 flex flex-col justify-center max-w-4xl">
-          <div className="inline-flex items-center gap-3 mb-6 bg-zinc-950/50 w-fit px-4 py-2 rounded-full border border-zinc-800/80 backdrop-blur-sm">
+          <div className="inline-flex items-center gap-3 mb-6 bg-white/50 dark:bg-zinc-950/50 w-fit px-4 py-2 rounded-full border border-gray-200 dark:border-zinc-800/80 backdrop-blur-sm">
             <span className="w-2 h-2 bg-[#ff4655] rounded-full animate-pulse shadow-[0_0_10px_#ff4655]" />
-            <span className="text-zinc-300 text-xs font-bold tracking-[0.2em] uppercase">
+            <span className="text-gray-600 dark:text-zinc-300 text-xs font-bold tracking-[0.2em] uppercase">
               {featuredMission ? 'Active Priority Protocol' : 'System Awaiting Directives'}
             </span>
           </div>
           
-          <h1 className="text-6xl md:text-8xl font-teko text-white uppercase leading-none drop-shadow-2xl mb-6 tracking-wide group-hover:text-[#ff4655] transition-colors duration-500 line-clamp-3">
+          <h1 className="text-6xl md:text-8xl font-teko text-zinc-900 dark:text-white uppercase leading-none drop-shadow-2xl mb-6 tracking-wide group-hover:text-[#ff4655] dark:group-hover:text-[#ff4655] transition-colors duration-500 line-clamp-3">
             {featuredMission ? featuredMission.quests?.title : 'DEFEAT TUTORIAL HELL'}
           </h1>
           
-          <p className="text-zinc-400 text-base md:text-lg mb-10 font-light max-w-xl">
+          <p className="text-zinc-500 dark:text-zinc-400 text-base md:text-lg mb-10 font-light max-w-xl">
             {featuredMission 
               ? 'Your high-priority mission is currently active. Engage now to secure your EXP and cryptographic proof of action.' 
               : 'Generate your first mission to begin your ascent. Convert any task, tutorial, or goal into a highly structured RPG quest.'}
@@ -227,16 +227,16 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 relative overflow-hidden"
+            className="bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 relative overflow-hidden transition-colors duration-300"
           >
             <div className="absolute top-0 right-0 w-20 h-20 bg-[#ff4655]/5 blur-2xl" />
             
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <Target className="w-5 h-5 text-[#ff4655]" />
-                <h2 className="font-teko text-2xl text-white uppercase tracking-wider">Mission Generator</h2>
+                <h2 className="font-teko text-2xl text-zinc-900 dark:text-white uppercase tracking-wider">Mission Generator</h2>
               </div>
-              <span className="text-[10px] text-zinc-500 font-mono tracking-widest border border-zinc-800 px-2 py-1 rounded">GROQ TACTICAL AI</span>
+              <span className="text-[10px] text-zinc-500 font-mono tracking-widest border border-gray-200 dark:border-zinc-800 px-2 py-1 rounded">GROQ TACTICAL AI</span>
             </div>
 
             <form onSubmit={handleGenerate} className="space-y-4 relative z-10">
@@ -244,12 +244,12 @@ export default function Dashboard() {
                 value={payload}
                 onChange={(e) => setPayload(e.target.value)}
                 placeholder="Paste a URL (YouTube, Article, Docs) or type your objective..."
-                className="w-full h-32 bg-zinc-950/50 border border-zinc-800 rounded-xl p-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#ff4655]/50 focus:ring-1 focus:ring-[#ff4655]/50 transition-all font-mono text-sm resize-none custom-scrollbar"
+                className="w-full h-32 bg-gray-50 dark:bg-zinc-950/50 border border-gray-200 dark:border-zinc-800 rounded-xl p-4 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:border-[#ff4655]/50 focus:ring-1 focus:ring-[#ff4655]/50 transition-all font-mono text-sm resize-none custom-scrollbar"
               />
               <Button
                 type="submit"
                 disabled={isProcessing || !payload.trim()}
-                className="w-full h-14 bg-zinc-800 hover:bg-zinc-700 text-white font-teko text-2xl tracking-widest uppercase transition-all duration-300 rounded-xl"
+                className="w-full h-14 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white font-teko text-2xl tracking-widest uppercase transition-all duration-300 rounded-xl"
               >
                 {isProcessing ? <Loader2 className="w-6 h-6 animate-spin text-[#ff4655]" /> : 'Extract Mission Protocol'}
               </Button>
@@ -262,7 +262,7 @@ export default function Dashboard() {
                 animate={{ opacity: 1, height: 'auto' }}
                 className="mt-6 pt-6 border-t border-zinc-800"
               >
-                <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-6">
+                <div className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <div className="inline-flex items-center gap-2 mb-2">
@@ -273,25 +273,25 @@ export default function Dashboard() {
                           {generatedQuest.quest.category}
                         </span>
                       </div>
-                      <h3 className="font-teko text-3xl text-white uppercase leading-none">{generatedQuest.quest.title}</h3>
+                      <h3 className="font-teko text-3xl text-zinc-900 dark:text-white uppercase leading-none">{generatedQuest.quest.title}</h3>
                     </div>
                   </div>
-                  <p className="text-zinc-400 text-sm mb-6">{generatedQuest.quest.description}</p>
+                  <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-6">{generatedQuest.quest.description}</p>
                   
                   <div className="space-y-2 mb-6">
                     {generatedQuest.steps.slice(0, 3).map((step: any, i: number) => (
                       <div key={i} className="flex gap-3 text-sm text-zinc-500">
-                        <span className="text-zinc-700 font-mono">0{i+1}</span>
+                        <span className="text-zinc-400 dark:text-zinc-700 font-mono">0{i+1}</span>
                         <span className="truncate">{step.title}</span>
                       </div>
                     ))}
                     {generatedQuest.steps.length > 3 && (
-                      <div className="text-xs text-zinc-600 italic pl-7">+ {generatedQuest.steps.length - 3} more steps</div>
+                      <div className="text-xs text-zinc-400 dark:text-zinc-600 italic pl-7">+ {generatedQuest.steps.length - 3} more steps</div>
                     )}
                   </div>
 
                   <div className="flex gap-4">
-                    <Button onClick={() => setGeneratedQuest(null)} variant="outline" className="flex-1 bg-transparent border-zinc-700 text-zinc-400 hover:text-white uppercase tracking-widest font-bold">Abort</Button>
+                    <Button onClick={() => setGeneratedQuest(null)} variant="outline" className="flex-1 bg-transparent border-gray-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white uppercase tracking-widest font-bold">Abort</Button>
                     <Button onClick={handleAcceptMission} disabled={isAccepting} className="flex-1 bg-[#ff4655] hover:bg-[#ff4655]/90 text-white uppercase tracking-widest font-bold">
                       {isAccepting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Accept Mission'}
                     </Button>
@@ -306,37 +306,37 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 relative overflow-hidden"
+            className="bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 relative overflow-hidden transition-colors duration-300"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-3xl" />
             
             <div className="flex items-center gap-3 mb-6 relative z-10">
               <div className="p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
-                <Activity className="w-5 h-5 text-cyan-400" />
+                <Activity className="w-5 h-5 text-cyan-500 dark:text-cyan-400" />
               </div>
-              <h2 className="font-teko text-3xl text-white uppercase tracking-wider">Global Intel Feed</h2>
+              <h2 className="font-teko text-3xl text-zinc-900 dark:text-white uppercase tracking-wider">Global Intel Feed</h2>
             </div>
             
             <div className="space-y-3 relative z-10">
               {[
                 { user: 'Kael', action: 'completed mission', quest: 'Advanced Next.js Routing', time: '2m ago', color: 'text-[#ff4655]', bg: 'bg-[#ff4655]/10', border: 'border-[#ff4655]/20' },
-                { user: 'Sova', action: 'accepted bounty', quest: 'Fix Postgres RLS Policies', time: '15m ago', color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/20' },
-                { user: 'Viper', action: 'leveled up to', quest: 'Level 12', time: '1h ago', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
-                { user: 'Omen', action: 'gained 500 EXP from', quest: 'Backend Optimization', time: '3h ago', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
+                { user: 'Sova', action: 'accepted bounty', quest: 'Fix Postgres RLS Policies', time: '15m ago', color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/20' },
+                { user: 'Viper', action: 'leveled up to', quest: 'Level 12', time: '1h ago', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+                { user: 'Omen', action: 'gained 500 EXP from', quest: 'Backend Optimization', time: '3h ago', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
               ].map((item, i) => (
-                <div key={i} className="flex items-center justify-between p-4 bg-zinc-950/80 border border-zinc-800/80 rounded-xl hover:border-zinc-700 hover:bg-zinc-900 transition-all group">
+                <div key={i} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-950/80 border border-gray-200 dark:border-zinc-800/80 rounded-xl hover:border-gray-300 dark:hover:border-zinc-700 hover:bg-gray-100 dark:hover:bg-zinc-900 transition-all group">
                   <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white ${item.bg} ${item.border} border shadow-inner`}>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-zinc-900 dark:text-white ${item.bg} ${item.border} border shadow-inner`}>
                       {item.user.charAt(0)}
                     </div>
                     <div>
-                      <p className="text-sm text-zinc-400">
-                        <span className="font-bold text-zinc-200 group-hover:text-white transition-colors">{item.user}</span> {item.action}{' '}
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        <span className="font-bold text-zinc-900 dark:text-zinc-200 group-hover:text-zinc-950 dark:group-hover:text-white transition-colors">{item.user}</span> {item.action}{' '}
                         <span className={`font-medium ${item.color}`}>{item.quest}</span>
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs text-zinc-600 font-mono bg-zinc-900 px-2 py-1 rounded border border-zinc-800">{item.time}</span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-600 font-mono bg-white dark:bg-zinc-900 px-2 py-1 rounded border border-gray-200 dark:border-zinc-800">{item.time}</span>
                 </div>
               ))}
             </div>
@@ -352,11 +352,11 @@ export default function Dashboard() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6"
+            className="bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 transition-colors duration-300"
           >
             <div className="flex items-center gap-2 mb-4">
               <Zap className="w-5 h-5 text-yellow-500" />
-              <h2 className="font-teko text-2xl text-white uppercase tracking-wider">Performance Radar</h2>
+              <h2 className="font-teko text-2xl text-zinc-900 dark:text-white uppercase tracking-wider">Performance Radar</h2>
             </div>
             <p className="text-xs text-zinc-500 mb-4 font-mono">STATISTICAL ANALYSIS OF CORE ATTRIBUTES</p>
             <PerformanceRadar />
@@ -367,25 +367,25 @@ export default function Dashboard() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 flex flex-col h-[400px]"
+            className="bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 flex flex-col h-[400px] transition-colors duration-300"
           >
             <div className="flex items-center gap-2 mb-6">
               <Crosshair className="w-5 h-5 text-[#ff4655]" />
-              <h2 className="font-teko text-2xl text-white uppercase tracking-wider">Active Operations</h2>
+              <h2 className="font-teko text-2xl text-zinc-900 dark:text-white uppercase tracking-wider">Active Operations</h2>
             </div>
             
             <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
               {activeMissions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center text-center opacity-50 h-full min-h-[150px]">
-                  <ShieldAlert className="w-8 h-8 text-zinc-600 mb-4" />
-                  <p className="text-zinc-500 text-[10px] uppercase tracking-[0.2em] font-bold">No Active Missions</p>
+                  <ShieldAlert className="w-8 h-8 text-zinc-500 dark:text-zinc-600 mb-4" />
+                  <p className="text-zinc-400 dark:text-zinc-500 text-[10px] uppercase tracking-[0.2em] font-bold">No Active Missions</p>
                 </div>
               ) : (
                 activeMissions.map((mission) => (
                   <div 
                     key={mission.id} 
                     onClick={() => router.push(`/mission/${mission.quests?.id}`)}
-                    className="bg-zinc-950/80 border border-zinc-800 p-4 rounded-xl hover:border-[#ff4655]/50 transition-colors group cursor-pointer relative overflow-hidden"
+                    className="bg-gray-50 dark:bg-zinc-950/80 border border-gray-200 dark:border-zinc-800 p-4 rounded-xl hover:border-[#ff4655]/50 transition-colors group cursor-pointer relative overflow-hidden"
                   >
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#ff4655] opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(255,70,85,0.8)]" />
                     <div className="flex justify-between items-start mb-2 pl-2">
@@ -394,7 +394,7 @@ export default function Dashboard() {
                       </span>
                       <span className="text-[10px] text-zinc-500 uppercase tracking-widest">{mission.quests?.category || 'General'}</span>
                     </div>
-                    <h4 className="font-teko text-xl text-zinc-200 uppercase leading-none truncate group-hover:text-white transition-colors pl-2">{mission.quests?.title || 'Unknown Protocol'}</h4>
+                    <h4 className="font-teko text-xl text-zinc-800 dark:text-zinc-200 uppercase leading-none truncate group-hover:text-[#ff4655] dark:group-hover:text-white transition-colors pl-2">{mission.quests?.title || 'Unknown Protocol'}</h4>
                   </div>
                 ))
               )}

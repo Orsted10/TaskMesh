@@ -30,7 +30,7 @@ export function Sidebar() {
   };
 
   return (
-    <div className="w-[280px] h-screen bg-zinc-950 border-r border-zinc-900 flex flex-col relative z-20">
+    <div className="w-[280px] h-screen bg-gray-50 dark:bg-zinc-950/80 border-r border-gray-200 dark:border-zinc-900 flex flex-col relative z-20 transition-colors duration-300">
       <div className="p-8 pb-4">
         <Link href="/" className="inline-block group cursor-pointer relative z-20">
           <div className="absolute -inset-2 bg-[#ff4655]/20 blur-xl opacity-0 group-hover:opacity-100 transition duration-500 rounded-full" />
@@ -40,8 +40,8 @@ export function Sidebar() {
               <path d="M2 17L12 22L22 17" stroke="#ff4655" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M2 12L12 17L22 12" stroke="#ff4655" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span className="font-teko text-3xl font-bold tracking-widest text-white group-hover:text-[#ff4655] transition-colors">
-              TASK<span className="text-[#ff4655] group-hover:text-white transition-colors">MESH</span>
+            <span className="font-teko text-3xl font-bold tracking-widest text-zinc-900 dark:text-white group-hover:text-[#ff4655] dark:group-hover:text-[#ff4655] transition-colors">
+              TASK<span className="text-[#ff4655] group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">MESH</span>
             </span>
           </div>
         </Link>
@@ -55,7 +55,7 @@ export function Sidebar() {
             <Link key={item.name} href={item.path}>
               <div
                 className={`relative flex items-center gap-4 px-4 py-3 rounded-lg group transition-all duration-300 overflow-hidden ${
-                  isActive ? 'bg-[#ff4655]/10 text-white' : 'text-zinc-500 hover:text-white hover:bg-zinc-900/50'
+                  isActive ? 'bg-[#ff4655]/10 text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-zinc-900/50'
                 }`}
               >
                 {/* Active Indicator */}
@@ -76,10 +76,10 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-zinc-900">
+      <div className="p-4 border-t border-gray-200 dark:border-zinc-900">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-4 px-4 py-3 w-full rounded-lg text-zinc-500 hover:text-[#ff4655] hover:bg-zinc-900/50 transition-all duration-300 group"
+          className="flex items-center gap-4 px-4 py-3 w-full rounded-lg text-zinc-500 hover:text-[#ff4655] hover:bg-gray-200/50 dark:hover:bg-zinc-900/50 transition-all duration-300 group"
         >
           <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
           <span className="font-teko text-xl uppercase tracking-widest mt-1">Terminate Session</span>
