@@ -82,23 +82,34 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
         .eq('quest_id', mission.id)
         .eq('user_id', user!.id);
         
-      // 2. Add EXP
-      const expReward = mission.difficulty * 100;
+      // 2. Add EXP, Gold, and Specific Skills
+      const expReward = mission.rewards?.xp || (mission.difficulty * 100);
+      const goldReward = mission.rewards?.gold || 0;
+      const earnedSkills = mission.rewards?.specific_skills || [];
       
       const { data: profile } = await supabase
         .from('users')
-        .select('total_exp')
+        .select('total_exp, gold, specific_skills')
         .eq('id', user!.id)
         .single();
         
       if (profile) {
+        let updatedSkills = profile.specific_skills || {};
+        earnedSkills.forEach((skill: any) => {
+          updatedSkills[skill.name] = (updatedSkills[skill.name] || 0) + skill.value;
+        });
+
         await supabase
           .from('users')
-          .update({ total_exp: profile.total_exp + expReward })
+          .update({ 
+            total_exp: (profile.total_exp || 0) + expReward,
+            gold: (profile.gold || 0) + goldReward,
+            specific_skills: updatedSkills
+          })
           .eq('id', user!.id);
       }
       
-      toast.success('MISSION ACCOMPLISHED', { description: `+${expReward} EXP Gained!` });
+      toast.success('MISSION ACCOMPLISHED', { description: `+${expReward} EXP | +${goldReward} GOLD Gained!` });
       router.push('/dashboard');
     } catch (err) {
       toast.error('Failed to complete mission');
@@ -132,21 +143,48 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
           Back to Command Center
         </Button>
 
-        <div className="mb-12 border-l-2 border-[#ff4655] pl-6">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-xs font-bold text-[#ff4655] uppercase tracking-widest bg-[#ff4655]/10 px-2 py-1 rounded">
+        <div className="mb-12 border-l-4 border-[#ff4655] pl-6 relative">
+          <div className="absolute -left-[3px] top-0 bottom-0 w-[2px] bg-[#ff4655] animate-pulse shadow-[0_0_15px_#ff4655]" />
+          
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+            <span className={`text-xs font-bold uppercase tracking-widest px-3 py-1 rounded border 
+              ${mission.tier?.toLowerCase().includes('legendary') || mission.tier?.toLowerCase().includes('boss') 
+                ? 'bg-purple-500/10 text-purple-400 border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.2)]' 
+                : 'bg-zinc-800 text-zinc-300 border-zinc-700'}`}>
+              {mission.tier || 'STANDARD OPERATION'}
+            </span>
+            <span className="text-xs font-bold text-[#ff4655] uppercase tracking-widest bg-[#ff4655]/10 px-3 py-1 rounded border border-[#ff4655]/20">
               LVL {mission.difficulty}
             </span>
             <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
               {mission.category}
             </span>
           </div>
+          
           <h1 className="text-5xl md:text-7xl font-teko text-white uppercase leading-none mb-4 shadow-red-500/20 drop-shadow-lg">
             {mission.title}
           </h1>
-          <p className="text-xl text-zinc-400 font-light max-w-2xl">
+          <p className="text-xl text-zinc-400 font-light max-w-2xl mb-8">
             {mission.description}
           </p>
+
+          {/* Loot Pool Display */}
+          <div className="bg-zinc-900/40 border border-zinc-800/50 p-4 rounded-lg inline-block">
+            <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-2 font-bold">Estimated Loot</div>
+            <div className="flex items-center gap-4">
+              <span className="text-lg font-teko text-white bg-zinc-800/80 px-4 py-1 rounded shadow-inner border border-zinc-700/50">
+                <span className="text-[#ff4655]">EXP</span> +{mission.rewards?.xp || mission.difficulty * 100}
+              </span>
+              <span className="text-lg font-teko text-white bg-zinc-800/80 px-4 py-1 rounded shadow-inner border border-zinc-700/50">
+                <span className="text-yellow-500">GOLD</span> +{mission.rewards?.gold || 0}
+              </span>
+              {mission.rewards?.specific_skills?.map((skill: any, idx: number) => (
+                <span key={idx} className="text-lg font-teko text-white bg-cyan-900/30 px-4 py-1 rounded shadow-inner border border-cyan-700/50">
+                  <span className="text-cyan-400">{skill.name.toUpperCase()}</span> +{skill.value}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="space-y-6 mb-12">

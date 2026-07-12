@@ -81,52 +81,60 @@ export default function Dashboard() {
   };
 
   const handleAcceptMission = async () => {
-    if (!user || !generatedQuest) return;
+    if (!user || !generatedQuest || !generatedQuest.quests) return;
     setIsAccepting(true);
 
     try {
-      const { data: questData, error: questError } = await supabase
-        .from('quests')
-        .insert({
-          title: generatedQuest.quest.title,
-          description: generatedQuest.quest.description,
-          category: generatedQuest.quest.category,
-          difficulty: generatedQuest.quest.difficulty,
-          creator_id: user.id,
-        })
-        .select()
-        .single();
-      if (questError) throw questError;
+      for (const quest of generatedQuest.quests) {
+        // Insert Quest
+        const { data: questData, error: questError } = await supabase
+          .from('quests')
+          .insert({
+            title: quest.title,
+            description: quest.description,
+            category: quest.category,
+            difficulty: quest.difficulty,
+            tier: quest.tier,
+            mission_type: quest.mission_type,
+            rewards: quest.rewards,
+            creator_id: user.id,
+          })
+          .select()
+          .single();
+        if (questError) throw questError;
 
-      const stepsToInsert = generatedQuest.steps.map((step: any) => ({
-        quest_id: questData.id,
-        order_index: step.order_index,
-        title: step.title,
-        instruction: step.instruction,
-        estimated_time_seconds: step.estimated_time_seconds,
-        verification_type: step.verification_type,
-        ai_validation_prompt: step.ai_validation_prompt,
-      }));
+        // Insert Steps
+        if (quest.steps && quest.steps.length > 0) {
+          const stepsToInsert = quest.steps.map((step: any) => ({
+            quest_id: questData.id,
+            order_index: step.order_index,
+            title: step.title,
+            instruction: step.instruction,
+            verification_type: 'image',
+            ai_validation_prompt: step.ai_validation_prompt,
+          }));
+          const { error: stepsError } = await supabase.from('quest_steps').insert(stepsToInsert);
+          if (stepsError) throw stepsError;
+        }
 
-      const { error: stepsError } = await supabase.from('quest_steps').insert(stepsToInsert);
-      if (stepsError) throw stepsError;
+        // Insert Progress
+        const { error: progressError } = await supabase
+          .from('user_quest_progress')
+          .insert({
+            user_id: user.id,
+            quest_id: questData.id,
+            status: 'in_progress',
+          });
+        if (progressError) throw progressError;
+      }
 
-      const { error: progressError } = await supabase
-        .from('user_quest_progress')
-        .insert({
-          user_id: user.id,
-          quest_id: questData.id,
-          status: 'in_progress',
-        });
-      if (progressError) throw progressError;
-
-      toast.success('Mission Accepted!', { description: 'Added to your active operations.' });
+      toast.success('Campaign Accepted!', { description: `${generatedQuest.quests.length} missions added to active operations.` });
       setGeneratedQuest(null);
       setPayload('');
       fetchActiveMissions();
 
     } catch (err: any) {
-      toast.error('Failed to accept mission', { description: err.message });
+      toast.error('Failed to accept campaign', { description: err.message });
     } finally {
       setIsAccepting(false);
     }
@@ -255,47 +263,74 @@ export default function Dashboard() {
               </Button>
             </form>
 
-            {/* Generated Quest Preview */}
-            {generatedQuest && (
+            {/* Generated Campaign Preview */}
+            {generatedQuest && generatedQuest.quests && (
               <motion.div 
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="mt-6 pt-6 border-t border-zinc-800"
+                className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800"
               >
-                <div className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <div className="inline-flex items-center gap-2 mb-2">
-                        <span className="text-[10px] font-bold text-[#ff4655] uppercase tracking-widest bg-[#ff4655]/10 px-2 py-1 rounded border border-[#ff4655]/20">
-                          LVL {generatedQuest.quest.difficulty}
-                        </span>
-                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                          {generatedQuest.quest.category}
-                        </span>
-                      </div>
-                      <h3 className="font-teko text-3xl text-zinc-900 dark:text-white uppercase leading-none">{generatedQuest.quest.title}</h3>
-                    </div>
-                  </div>
-                  <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-6">{generatedQuest.quest.description}</p>
-                  
-                  <div className="space-y-2 mb-6">
-                    {generatedQuest.steps.slice(0, 3).map((step: any, i: number) => (
-                      <div key={i} className="flex gap-3 text-sm text-zinc-500">
-                        <span className="text-zinc-400 dark:text-zinc-700 font-mono">0{i+1}</span>
-                        <span className="truncate">{step.title}</span>
-                      </div>
-                    ))}
-                    {generatedQuest.steps.length > 3 && (
-                      <div className="text-xs text-zinc-400 dark:text-zinc-600 italic pl-7">+ {generatedQuest.steps.length - 3} more steps</div>
-                    )}
-                  </div>
+                <div className="mb-6 border-l-2 border-[#ff4655] pl-4">
+                  <span className="text-[10px] font-bold text-[#ff4655] uppercase tracking-widest bg-[#ff4655]/10 px-2 py-1 rounded">CAMPAIGN BRIEFING</span>
+                  <h3 className="font-teko text-4xl text-zinc-900 dark:text-white uppercase leading-none mt-2">{generatedQuest.campaign_title || 'TACTICAL OPERATION'}</h3>
+                  <p className="text-zinc-500 text-sm mt-1">{generatedQuest.campaign_description}</p>
+                </div>
 
-                  <div className="flex gap-4">
-                    <Button onClick={() => setGeneratedQuest(null)} variant="outline" className="flex-1 bg-transparent border-gray-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white uppercase tracking-widest font-bold">Abort</Button>
-                    <Button onClick={handleAcceptMission} disabled={isAccepting} className="flex-1 bg-[#ff4655] hover:bg-[#ff4655]/90 text-white uppercase tracking-widest font-bold">
-                      {isAccepting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Accept Mission'}
-                    </Button>
-                  </div>
+                <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2 mb-6">
+                  {generatedQuest.quests.map((quest: any, qIdx: number) => (
+                    <div key={qIdx} className="bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 relative overflow-hidden group">
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-zinc-300 dark:bg-zinc-800 group-hover:bg-[#ff4655] transition-colors" />
+                      
+                      <div className="flex justify-between items-start mb-2 pl-2">
+                        <div className="flex gap-2 items-center">
+                          <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border 
+                            ${quest.tier?.toLowerCase().includes('legendary') || quest.tier?.toLowerCase().includes('boss') 
+                              ? 'bg-purple-500/10 text-purple-500 border-purple-500/30' 
+                              : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700'}`}>
+                            {quest.tier || 'STANDARD'}
+                          </span>
+                          <span className="text-[10px] font-bold text-[#ff4655] uppercase tracking-widest bg-[#ff4655]/10 px-2 py-0.5 rounded border border-[#ff4655]/20">
+                            LVL {quest.difficulty}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold text-yellow-600 dark:text-yellow-500 uppercase tracking-widest flex items-center gap-1">
+                          + {quest.rewards?.xp || 100} EXP | {quest.rewards?.gold || 10} GOLD
+                        </span>
+                      </div>
+                      
+                      <h4 className="font-teko text-2xl text-zinc-900 dark:text-white uppercase leading-none pl-2 mb-2 group-hover:text-[#ff4655] transition-colors">{quest.title}</h4>
+                      <p className="text-zinc-500 text-xs pl-2 mb-4">{quest.description}</p>
+                      
+                      {quest.rewards?.specific_skills && quest.rewards.specific_skills.length > 0 && (
+                        <div className="pl-2 flex gap-2 flex-wrap mb-4">
+                          {quest.rewards.specific_skills.map((skill: any, idx: number) => (
+                            <span key={idx} className="text-[9px] uppercase tracking-widest bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded">
+                              + {skill.value} {skill.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="pl-2 space-y-1">
+                        {quest.steps?.slice(0, 2).map((step: any, i: number) => (
+                          <div key={i} className="flex gap-3 text-[11px] text-zinc-500">
+                            <span className="text-zinc-400 dark:text-zinc-700 font-mono">0{i+1}</span>
+                            <span className="truncate">{step.title}</span>
+                          </div>
+                        ))}
+                        {quest.steps?.length > 2 && (
+                          <div className="text-[10px] text-zinc-400 dark:text-zinc-600 italic pl-6">+ {quest.steps.length - 2} more objectives</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-4">
+                  <Button onClick={() => setGeneratedQuest(null)} variant="outline" className="flex-1 bg-transparent border-gray-200 dark:border-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white uppercase tracking-widest font-bold">Abort</Button>
+                  <Button onClick={handleAcceptMission} disabled={isAccepting} className="flex-1 bg-[#ff4655] hover:bg-[#ff4655]/90 text-white uppercase tracking-widest font-bold h-12 shadow-[0_0_20px_rgba(255,70,85,0.3)]">
+                    {isAccepting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Accept Campaign'}
+                  </Button>
                 </div>
               </motion.div>
             )}

@@ -4,36 +4,44 @@ import * as cheerio from 'cheerio';
 
 const SYSTEM_PROMPT = `
 You are the ACTIO God-Mode AI Engine, a tactical, gamified quest generator.
-Your job is to take raw, boring text (or scraped webpage content) and turn it into a highly structured, actionable "Quest" with specific steps.
+Your job is to take raw, boring text (or scraped webpage content) and turn it into a highly structured, actionable "Campaign" containing multiple missions.
 
-You MUST map the quest to ONE of these 6 Core Stats:
-- strength (Fitness, workouts, physical labor, sports)
-- intelligence (Studying, coding, tech, finance, reading)
-- charisma (Social, civic duties, networking, leadership)
-- creativity (Art, music, design, writing)
-- craftsmanship (DIY, cooking, repair, building)
-- willpower (Chores, cleaning, habits, mental health, focus)
+Based on the scope and difficulty of the task, you MUST generate an array of missions (a Campaign). 
+If the task is MASSIVE (e.g., "Learn Python", "Build a Startup"), generate a multi-tier campaign (e.g., 1 Daily, 1 Medium, 1 Hard, 1 Boss).
+If the task is SMALL (e.g., "Cook Fried Rice"), generate fewer, appropriate missions (e.g., 1 Easy, 1 Medium).
 
-You MUST respond in pure, raw JSON format. No markdown blocks, no \`\`\`json, just the JSON object.
-Ensure the "category" exactly matches one of the 6 words above in lowercase.
+MISSION TIERS AVAILABLE:
+Tutorial, Easy, Medium, Hard, Epic, Unique, Extreme, Legendary, Impossible
+Boss Levels: Mini Boss, Side Boss, Boss, World Boss, Guild Boss
+Time-Based: Hourly, Daily, Weekly, Monthly
 
-OUTPUT JSON FORMAT:
+You MUST map each quest to ONE of these 6 Core Stats: strength, intelligence, charisma, creativity, craftsmanship, willpower.
+
+You MUST respond in pure, raw JSON format matching this EXACT schema:
 {
-  "quest": {
-    "title": "string (A badass, gamified title for the mission)",
-    "description": "string (A brief tactical briefing of the mission)",
-    "category": "string (one of the 6 core stats)",
-    "difficulty": number (1 to 5, where 1 is trivial and 5 is extreme),
-    "estimated_time_minutes": number
-  },
-  "steps": [
+  "campaign_title": "string (A badass title for the overall objective)",
+  "campaign_description": "string",
+  "quests": [
     {
-      "order_index": number (starting at 1),
-      "title": "string (Short tactical action name)",
-      "instruction": "string (Clear, imperative instruction)",
-      "estimated_time_seconds": number,
-      "verification_type": "image",
-      "ai_validation_prompt": "string (What the Vision AI should look for to prove this step is done)"
+      "title": "string (Gamified mission title)",
+      "description": "string (Tactical briefing)",
+      "category": "string (one of the 6 core stats)",
+      "difficulty": number (1 to 5),
+      "tier": "string (One of the MISSION TIERS)",
+      "mission_type": "string (e.g., 'Standard', 'Boss', 'Daily')",
+      "rewards": {
+        "xp": number (100 to 5000 based on tier),
+        "gold": number (10 to 1000),
+        "specific_skills": [{"name": "string (e.g. 'Python', 'Cooking')", "value": number}]
+      },
+      "steps": [
+        {
+          "order_index": number,
+          "title": "string (Short action name)",
+          "instruction": "string",
+          "ai_validation_prompt": "string (What the Vision AI should look for)"
+        }
+      ]
     }
   ]
 }
@@ -42,13 +50,10 @@ OUTPUT JSON FORMAT:
 export async function POST(req: Request) {
   try {
     if (!process.env.GROQ_API_KEY) {
-      return NextResponse.json({ error: 'GROQ_API_KEY is not configured in Vercel settings.' }, { status: 500 });
+      return NextResponse.json({ error: 'GROQ_API_KEY is not configured.' }, { status: 500 });
     }
 
-    const groq = new Groq({
-      apiKey: process.env.GROQ_API_KEY,
-    });
-
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
     const body = await req.json();
     const { type, payload } = body;
 
@@ -66,33 +71,19 @@ export async function POST(req: Request) {
           const oembedRes = await fetch(oembedUrl);
           if (oembedRes.ok) {
             const oembedData = await oembedRes.json();
-            rawContent = `YOUTUBE VIDEO TITLE: ${oembedData.title}\nAUTHOR: ${oembedData.author_name}\n\nINSTRUCTION: Create a quest based on the topic of this video title. DO NOT make a quest about YouTube itself. Make the quest about learning or doing the thing mentioned in the video title.`;
-          } else {
-            rawContent = `USER PASTED A YOUTUBE VIDEO URL: ${payload}. Assume it's a generic video viewing task. DO NOT make a quest about YouTube UI.`;
+            rawContent = `YOUTUBE VIDEO TITLE: ${oembedData.title}\nAUTHOR: ${oembedData.author_name}\n\nINSTRUCTION: Create a campaign based on this video.`;
           }
         } else {
           const response = await fetch(payload, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
+            headers: { 'User-Agent': 'Mozilla/5.0' }
           });
           const html = await response.text();
           const $ = cheerio.load(html);
-          
-          const title = $('title').text() || $('meta[property="og:title"]').attr('content') || '';
-          const description = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '';
-
-          // Remove junk to save Groq tokens and make it highly efficient
+          const title = $('title').text() || '';
           $('script, style, noscript, iframe, img, svg').remove();
-          
           let bodyText = $('body').text().replace(/\s+/g, ' ').trim();
-          
-          // Truncate to ~3000 chars to save tokens (highly efficient $1 limit optimization)
-          if (bodyText.length > 3000) {
-            bodyText = bodyText.substring(0, 3000) + '...';
-          }
-          
-          rawContent = `URL TITLE: ${title}\nURL DESCRIPTION: ${description}\n\nWEBSITE CONTENT:\n${bodyText}`;
+          if (bodyText.length > 3000) bodyText = bodyText.substring(0, 3000) + '...';
+          rawContent = `URL TITLE: ${title}\n\nWEBSITE CONTENT:\n${bodyText}`;
         }
       } catch (err) {
         return NextResponse.json({ error: 'Failed to scrape URL' }, { status: 400 });
@@ -101,40 +92,24 @@ export async function POST(req: Request) {
 
     const completion = await groq.chat.completions.create({
       messages: [
-        {
-          role: 'system',
-          content: SYSTEM_PROMPT,
-        },
-        {
-          role: 'user',
-          content: `Generate a quest from the following input:\n\n${rawContent}`,
-        },
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: `Generate a campaign from the following input:\n\n${rawContent}` },
       ],
-      model: 'llama-3.1-8b-instant', // Highly efficient and native JSON format support
-      temperature: 0.2, // Low temp for highly structured, predictable JSON
+      model: 'llama-3.1-8b-instant',
+      temperature: 0.3,
       response_format: { type: 'json_object' },
     });
 
     let aiResponse = completion.choices[0]?.message?.content || '{}';
-    
-    // Attempt to strip markdown blocks if the model weirdly outputs them despite JSON mode
     if (aiResponse.includes('```')) {
       const match = aiResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      if (match && match[1]) {
-        aiResponse = match[1];
-      }
+      if (match && match[1]) aiResponse = match[1];
     }
 
-    // Attempt to parse to ensure it's valid JSON before returning
     const parsedJson = JSON.parse(aiResponse);
-
     return NextResponse.json(parsedJson);
   } catch (error: any) {
     console.error('Groq API Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate quest', details: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to generate campaign', details: error.message }, { status: 500 });
   }
 }
-
