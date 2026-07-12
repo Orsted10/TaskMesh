@@ -61,28 +61,39 @@ export async function POST(req: Request) {
     // Heavy-duty URL Scraper
     if (type === 'url') {
       try {
-        const response = await fetch(payload, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        if (payload.includes('youtube.com') || payload.includes('youtu.be')) {
+          const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(payload)}&format=json`;
+          const oembedRes = await fetch(oembedUrl);
+          if (oembedRes.ok) {
+            const oembedData = await oembedRes.json();
+            rawContent = `YOUTUBE VIDEO TITLE: ${oembedData.title}\nAUTHOR: ${oembedData.author_name}\n\nINSTRUCTION: Create a quest based on the topic of this video title. DO NOT make a quest about YouTube itself. Make the quest about learning or doing the thing mentioned in the video title.`;
+          } else {
+            rawContent = `USER PASTED A YOUTUBE VIDEO URL: ${payload}. Assume it's a generic video viewing task. DO NOT make a quest about YouTube UI.`;
           }
-        });
-        const html = await response.text();
-        const $ = cheerio.load(html);
-        
-        const title = $('title').text() || $('meta[property="og:title"]').attr('content') || '';
-        const description = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '';
+        } else {
+          const response = await fetch(payload, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+          });
+          const html = await response.text();
+          const $ = cheerio.load(html);
+          
+          const title = $('title').text() || $('meta[property="og:title"]').attr('content') || '';
+          const description = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '';
 
-        // Remove junk to save Groq tokens and make it highly efficient
-        $('script, style, noscript, iframe, img, svg').remove();
-        
-        let bodyText = $('body').text().replace(/\s+/g, ' ').trim();
-        
-        // Truncate to ~3000 chars to save tokens (highly efficient $1 limit optimization)
-        if (bodyText.length > 3000) {
-          bodyText = bodyText.substring(0, 3000) + '...';
+          // Remove junk to save Groq tokens and make it highly efficient
+          $('script, style, noscript, iframe, img, svg').remove();
+          
+          let bodyText = $('body').text().replace(/\s+/g, ' ').trim();
+          
+          // Truncate to ~3000 chars to save tokens (highly efficient $1 limit optimization)
+          if (bodyText.length > 3000) {
+            bodyText = bodyText.substring(0, 3000) + '...';
+          }
+          
+          rawContent = `URL TITLE: ${title}\nURL DESCRIPTION: ${description}\n\nWEBSITE CONTENT:\n${bodyText}`;
         }
-        
-        rawContent = `URL TITLE: ${title}\nURL DESCRIPTION: ${description}\n\nWEBSITE CONTENT:\n${bodyText}`;
       } catch (err) {
         return NextResponse.json({ error: 'Failed to scrape URL' }, { status: 400 });
       }
