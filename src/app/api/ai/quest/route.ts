@@ -2,10 +2,6 @@ import { NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import * as cheerio from 'cheerio';
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
-
 const SYSTEM_PROMPT = `
 You are the ACTIO God-Mode AI Engine, a tactical, gamified quest generator.
 Your job is to take raw, boring text (or scraped webpage content) and turn it into a highly structured, actionable "Quest" with specific steps.
@@ -45,6 +41,14 @@ OUTPUT JSON FORMAT:
 
 export async function POST(req: Request) {
   try {
+    if (!process.env.GROQ_API_KEY) {
+      return NextResponse.json({ error: 'GROQ_API_KEY is not configured in Vercel settings.' }, { status: 500 });
+    }
+
+    const groq = new Groq({
+      apiKey: process.env.GROQ_API_KEY,
+    });
+
     const body = await req.json();
     const { type, payload } = body;
 

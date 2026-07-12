@@ -2,7 +2,12 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Link as LinkIcon, Type, Cpu, Crosshair, ShieldAlert, Activity, User as UserIcon, Zap, Target, Trophy, Clock, Loader2 } from 'lucide-react';
+import { 
+  Sparkles, Link as LinkIcon, Type, Cpu, Crosshair, ShieldAlert, 
+  Activity, User as UserIcon, Zap, Target, Trophy, Clock, Loader2,
+  Home, LayoutGrid, Gift, Monitor, Star, ShoppingBag, MessageSquare, 
+  Plus, Search, Bell, ShoppingCart, ArrowRight
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -54,7 +59,7 @@ export default function Dashboard() {
 
       const data = await res.json();
       
-      if (!res.ok) throw new Error(data.error || 'Failed to generate. (Did you add GROQ_API_KEY to Vercel?)');
+      if (!res.ok) throw new Error(data.error || 'Failed to generate mission.');
 
       setGeneratedQuest(data);
       toast.success('Mission Generated Successfully.');
@@ -116,268 +121,337 @@ export default function Dashboard() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-[#ff4655]/30 flex flex-col pt-20 overflow-hidden relative">
-      {/* Background FX */}
-      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03] pointer-events-none" />
-      <div className="absolute top-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#ff4655]/40 to-transparent shadow-[0_0_15px_rgba(255,70,85,0.4)]" />
-      <div className="absolute top-0 right-0 w-[50vw] h-[50vw] bg-[#ff4655]/5 blur-[120px] rounded-full pointer-events-none mix-blend-screen" />
-      <div className="absolute bottom-0 left-0 w-[40vw] h-[40vw] bg-blue-500/5 blur-[100px] rounded-full pointer-events-none mix-blend-screen" />
+  // Safe username fallback
+  const username = rpgProfile?.username?.toUpperCase() || 'AGENT';
 
-      {/* Main Grid Layout */}
-      <div className="relative z-10 flex-1 w-full max-w-[1600px] mx-auto p-4 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+  return (
+    <div className="min-h-screen bg-[#fed2d2] flex items-center justify-center p-4 sm:p-8 font-sans selection:bg-white/30">
+      
+      {/* MAC-STYLE APP WINDOW */}
+      <div className="w-full max-w-[1600px] h-[90vh] bg-[#3a111a] rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex overflow-hidden border-4 border-[#2b0c13]">
         
-        {/* LEFT COLUMN: Profile & Stats */}
-        <div className="lg:col-span-3 flex flex-col gap-6">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-zinc-900/40 backdrop-blur-md border border-zinc-800/50 rounded-2xl p-6 shadow-2xl relative overflow-hidden group"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-[#ff4655]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-xl bg-zinc-800 border-2 border-[#ff4655]/50 flex items-center justify-center shrink-0 overflow-hidden">
-                <UserIcon className="w-8 h-8 text-zinc-400" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black uppercase tracking-wider text-white">
-                  {rpgProfile?.username || 'AGENT_UNKNOWN'}
-                </h2>
-                <p className="text-[#ff4655] text-sm font-semibold tracking-widest">{rpgProfile?.title || 'ROOKIE'}</p>
-              </div>
+        {/* LEFT SIDEBAR (DARK ICON BAR) */}
+        <div className="w-20 bg-[#1d0a0f] flex flex-col items-center py-8 justify-between z-20">
+          <div className="space-y-6 flex flex-col items-center">
+            {/* Logo */}
+            <div className="w-10 h-10 mb-6 bg-gradient-to-br from-[#ff4655] to-orange-500 rounded-xl flex items-center justify-center transform rotate-45 shadow-lg">
+              <Crosshair className="w-5 h-5 text-white -rotate-45" />
             </div>
             
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-xs uppercase tracking-widest font-bold mb-2">
-                  <span className="text-zinc-400">Level {rpgProfile?.level || 1}</span>
-                  <span className="text-zinc-500">{rpgProfile?.total_exp || 0} EXP</span>
-                </div>
-                <div className="h-2 bg-zinc-950 rounded-full overflow-hidden border border-zinc-800">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${((rpgProfile?.total_exp || 0) % 1000) / 10}%` }}
-                    className="h-full bg-gradient-to-r from-[#ff4655] to-orange-500 rounded-full"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 mt-6">
-                <div className="bg-zinc-950/50 border border-zinc-800 rounded-lg p-3">
-                  <Zap className="w-4 h-4 text-yellow-500 mb-1" />
-                  <div className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Streak</div>
-                  <div className="text-lg font-black text-white">{rpgProfile?.current_streak || 0} Days</div>
-                </div>
-                <div className="bg-zinc-950/50 border border-zinc-800 rounded-lg p-3">
-                  <Target className="w-4 h-4 text-cyan-500 mb-1" />
-                  <div className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Multiplier</div>
-                  <div className="text-lg font-black text-white">{rpgProfile?.multiplier || 1.0}x</div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Placeholder for Stage 4 Radar Chart */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-zinc-900/40 backdrop-blur-md border border-zinc-800/50 rounded-2xl p-6 shadow-2xl flex-1 min-h-[300px] flex flex-col items-center justify-center text-center"
-          >
-            <Activity className="w-12 h-12 text-zinc-700 mb-4 animate-pulse" />
-            <h3 className="font-teko text-2xl uppercase tracking-widest text-zinc-500">Radar Calibration</h3>
-            <p className="text-zinc-600 text-sm mt-2">Stage 4: Hexagon Chart incoming...</p>
-          </motion.div>
+            {/* Nav Icons */}
+            <div className="p-3 bg-[#3a111a] rounded-xl text-[#ff4655] cursor-pointer"><Home className="w-5 h-5" /></div>
+            <div className="p-3 text-[#ff4655]/40 hover:text-[#ff4655] transition-colors cursor-pointer"><LayoutGrid className="w-5 h-5" /></div>
+            <div className="p-3 text-[#ff4655]/40 hover:text-[#ff4655] transition-colors cursor-pointer"><Gift className="w-5 h-5" /></div>
+            <div className="p-3 text-[#ff4655]/40 hover:text-[#ff4655] transition-colors cursor-pointer"><Monitor className="w-5 h-5" /></div>
+            <div className="p-3 text-[#ff4655]/40 hover:text-[#ff4655] transition-colors cursor-pointer"><Star className="w-5 h-5" /></div>
+            <div className="p-3 text-[#ff4655]/40 hover:text-[#ff4655] transition-colors cursor-pointer"><ShoppingBag className="w-5 h-5" /></div>
+            <div className="p-3 text-[#ff4655]/40 hover:text-[#ff4655] transition-colors cursor-pointer"><MessageSquare className="w-5 h-5" /></div>
+          </div>
+          
+          <div className="p-3 border border-[#ff4655]/30 rounded-xl text-[#ff4655] hover:bg-[#ff4655] hover:text-white transition-all cursor-pointer border-dashed">
+            <Plus className="w-5 h-5" />
+          </div>
         </div>
 
-        {/* MIDDLE COLUMN: Command Center & Active Quests */}
-        <div className="lg:col-span-6 flex flex-col gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col gap-2"
-          >
-            <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-zinc-100 to-zinc-500 font-teko flex items-center gap-3">
-              <Cpu className="w-8 h-8 text-[#ff4655]" />
-              COMMAND CENTER
-            </h1>
-            <p className="text-zinc-400 text-sm uppercase tracking-widest">Initialize New Operation</p>
-          </motion.div>
+        {/* MAIN DASHBOARD AREA */}
+        <div className="flex-1 flex flex-col relative overflow-hidden bg-gradient-to-br from-[#4d1723] to-[#3a111a]">
+          {/* Subtle grid/texture */}
+          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02] pointer-events-none mix-blend-overlay" />
+          
+          {/* HEADER */}
+          <div className="px-10 pt-8 pb-4 flex justify-between items-center relative z-10">
+            <div className="flex items-center gap-2">
+              <span className="text-[#fca5a5] text-xl font-light">Good evening,</span>
+              <span className="text-white text-xl font-bold tracking-wide">{username}</span>
+            </div>
+            
+            <div className="flex items-center gap-6">
+              <div className="relative">
+                <Search className="w-4 h-4 text-[#fca5a5] absolute left-3 top-1/2 -translate-y-1/2" />
+                <input 
+                  type="text" 
+                  placeholder="Search" 
+                  className="bg-[#2b0c13]/50 border border-[#fca5a5]/20 text-white placeholder:text-[#fca5a5]/50 text-sm rounded-full pl-10 pr-4 py-2 w-64 focus:outline-none focus:border-[#ff4655] transition-colors"
+                />
+              </div>
+              <ShoppingCart className="w-5 h-5 text-[#fca5a5] hover:text-white cursor-pointer transition-colors" />
+              <div className="relative">
+                <Bell className="w-5 h-5 text-[#fca5a5] hover:text-white cursor-pointer transition-colors" />
+                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#ff4655] rounded-full border-2 border-[#4d1723]" />
+              </div>
+            </div>
+          </div>
 
-          {/* Input Engine */}
-          {!generatedQuest ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-zinc-900/50 backdrop-blur-md border border-zinc-800/50 rounded-2xl p-2 shadow-2xl relative"
-            >
-              {isProcessing && (
-                <div className="absolute inset-0 z-50 bg-zinc-950/80 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center space-y-4">
-                  <div className="relative">
-                    <Cpu className="w-16 h-16 text-[#ff4655] animate-pulse" />
-                    <div className="absolute inset-0 w-full h-full border-[3px] border-[#ff4655] border-dashed rounded-full animate-[spin_4s_linear_infinite]" />
+          {/* SCROLLABLE GRID CONTENT */}
+          <div className="flex-1 overflow-y-auto px-10 pb-10 scrollbar-hide">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              
+              {/* LEFT & CENTER SECTIONS (Spans 2 columns) */}
+              <div className="xl:col-span-2 flex flex-col gap-6">
+                
+                {/* BIG HERO BANNER - ACTIVE MISSION */}
+                <div className="bg-gradient-to-r from-[#ff4655] to-[#cc2936] rounded-3xl p-8 relative overflow-hidden shadow-2xl min-h-[280px] flex flex-col justify-end group cursor-pointer border border-white/10">
+                  <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop')] opacity-20 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#2b0c13]/90 via-[#2b0c13]/40 to-transparent" />
+                  
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-white text-xs font-bold uppercase tracking-wider mb-4 border border-white/30">
+                      <Zap className="w-3 h-3 text-yellow-300" /> Active Operation
+                    </div>
+                    <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-none mb-2 shadow-black/50">
+                      DEFEAT TUTORIAL HELL
+                    </h1>
+                    <p className="text-white/80 max-w-md text-sm font-medium">
+                      Master React Native animations and deploy your first app to escape the infinite loop of tutorials.
+                    </p>
+                    <div className="mt-6 flex items-center gap-4">
+                      <div className="flex -space-x-3">
+                        <div className="w-8 h-8 rounded-full border-2 border-[#ff4655] bg-zinc-800" />
+                        <div className="w-8 h-8 rounded-full border-2 border-[#ff4655] bg-zinc-700" />
+                        <div className="w-8 h-8 rounded-full border-2 border-[#ff4655] bg-zinc-600" />
+                      </div>
+                      <span className="text-white text-xs font-bold">+53 Reviews</span>
+                    </div>
                   </div>
-                  <p className="text-[#ff4655] font-teko text-2xl tracking-widest uppercase animate-pulse">Groq Engine Computing...</p>
-                  <p className="text-zinc-500 text-xs tracking-widest uppercase">Converting to Actionable JSON</p>
                 </div>
-              )}
 
-              <div className="flex p-2 gap-2 bg-zinc-950/50 rounded-xl mb-4">
-                <button
-                  type="button"
-                  onClick={() => setInputType('text')}
-                  className={`flex-1 py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-wider transition-all duration-300 ${inputType === 'text' ? 'bg-[#ff4655]/10 text-[#ff4655] shadow-[0_0_15px_rgba(255,70,85,0.1)]' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'}`}
-                >
-                  <Type className="w-4 h-4" /> Raw Intel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setInputType('url')}
-                  className={`flex-1 py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-wider transition-all duration-300 ${inputType === 'url' ? 'bg-[#ff4655]/10 text-[#ff4655] shadow-[0_0_15px_rgba(255,70,85,0.1)]' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'}`}
-                >
-                  <LinkIcon className="w-4 h-4" /> Data Link
-                </button>
+                {/* COMMAND CENTER & GENERATOR */}
+                <div>
+                  <div className="flex justify-between items-end mb-4">
+                    <h2 className="text-2xl font-bold text-white tracking-wide">Command Center</h2>
+                    <span className="text-[#fca5a5] text-sm hover:text-white cursor-pointer transition-colors flex items-center gap-1">
+                      See More <ArrowRight className="w-4 h-4" />
+                    </span>
+                  </div>
+                  
+                  {!generatedQuest ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-[#2b0c13]/40 backdrop-blur-xl border border-[#fca5a5]/10 rounded-3xl p-6 shadow-xl relative"
+                    >
+                      {isProcessing && (
+                        <div className="absolute inset-0 z-50 bg-[#2b0c13]/80 backdrop-blur-sm rounded-3xl flex flex-col items-center justify-center space-y-4">
+                          <Cpu className="w-12 h-12 text-[#ff4655] animate-pulse" />
+                          <p className="text-white font-bold tracking-widest uppercase animate-pulse">Initializing AI Core...</p>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2 bg-[#1d0a0f] p-1 rounded-2xl mb-4 w-fit">
+                        <button
+                          type="button"
+                          onClick={() => setInputType('text')}
+                          className={`px-6 py-2 rounded-xl flex items-center gap-2 text-xs font-bold uppercase tracking-wider transition-all ${inputType === 'text' ? 'bg-[#ff4655] text-white shadow-lg' : 'text-[#fca5a5] hover:text-white'}`}
+                        >
+                          <Type className="w-3 h-3" /> Raw Intel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setInputType('url')}
+                          className={`px-6 py-2 rounded-xl flex items-center gap-2 text-xs font-bold uppercase tracking-wider transition-all ${inputType === 'url' ? 'bg-[#ff4655] text-white shadow-lg' : 'text-[#fca5a5] hover:text-white'}`}
+                        >
+                          <LinkIcon className="w-3 h-3" /> Data Link
+                        </button>
+                      </div>
+
+                      <form onSubmit={handleGenerate} className="space-y-4">
+                        {inputType === 'text' ? (
+                          <Textarea
+                            value={payload}
+                            onChange={(e) => setPayload(e.target.value)}
+                            placeholder="Describe your objective. Example: 'Learn framer motion gestures this weekend.'"
+                            className="min-h-[120px] bg-[#1d0a0f]/50 border-transparent focus-visible:ring-[#ff4655] text-white placeholder:text-[#fca5a5]/40 text-sm rounded-2xl resize-none"
+                          />
+                        ) : (
+                          <Input
+                            value={payload}
+                            onChange={(e) => setPayload(e.target.value)}
+                            placeholder="Paste a URL (Documentation, Article, GitHub)..."
+                            className="h-14 bg-[#1d0a0f]/50 border-transparent focus-visible:ring-[#ff4655] text-white placeholder:text-[#fca5a5]/40 text-sm rounded-2xl"
+                          />
+                        )}
+
+                        <div className="flex justify-end">
+                          <Button 
+                            type="submit" 
+                            disabled={!payload.trim() || isProcessing}
+                            className="h-12 px-8 rounded-xl bg-white text-[#2b0c13] hover:bg-[#fca5a5] font-bold uppercase tracking-widest transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                          >
+                            <Sparkles className="w-4 h-4 mr-2" /> Generate Mission
+                          </Button>
+                        </div>
+                      </form>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="bg-[#2b0c13]/60 backdrop-blur-xl border border-[#ff4655]/30 rounded-3xl p-6 shadow-2xl relative overflow-hidden"
+                    >
+                      <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#ff4655]/20 blur-3xl rounded-full pointer-events-none" />
+                      
+                      <div className="flex justify-between items-start mb-6">
+                        <div>
+                          <div className="flex gap-2 mb-2">
+                            <span className="px-2 py-1 bg-[#ff4655]/20 text-[#ff4655] text-[10px] font-black uppercase tracking-widest rounded">LVL {generatedQuest.quest.difficulty}</span>
+                            <span className="px-2 py-1 bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded">{generatedQuest.quest.category}</span>
+                          </div>
+                          <h3 className="text-2xl font-black text-white tracking-tight">{generatedQuest.quest.title}</h3>
+                          <p className="text-[#fca5a5] text-sm mt-1 max-w-xl">{generatedQuest.quest.description}</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-3xl font-black text-white">{generatedQuest.quest.estimated_time_minutes}</div>
+                          <div className="text-[10px] text-[#fca5a5] uppercase tracking-widest font-bold">Minutes</div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 mb-6 max-h-[300px] overflow-y-auto scrollbar-hide pr-2">
+                        {generatedQuest.steps.map((step) => (
+                          <div key={step.order_index} className="bg-[#1d0a0f]/80 p-4 rounded-2xl flex gap-4 border border-white/5 hover:border-[#ff4655]/50 transition-colors">
+                            <div className="w-8 h-8 rounded-full bg-[#ff4655] text-white flex items-center justify-center font-black shrink-0">
+                              {step.order_index}
+                            </div>
+                            <div>
+                              <h4 className="text-white font-bold">{step.title}</h4>
+                              <p className="text-[#fca5a5] text-xs mt-1 leading-relaxed">{step.instruction}</p>
+                              <div className="mt-2 text-[10px] font-mono text-[#ff4655] flex items-center gap-1 bg-[#ff4655]/10 px-2 py-1 rounded inline-flex">
+                                <ShieldAlert className="w-3 h-3" /> AI Verify: {step.ai_validation_prompt}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex gap-4">
+                        <Button
+                          onClick={() => setGeneratedQuest(null)}
+                          variant="ghost"
+                          className="flex-1 h-12 rounded-xl text-[#fca5a5] hover:text-white hover:bg-white/10 font-bold tracking-widest uppercase"
+                        >
+                          Abort
+                        </Button>
+                        <Button
+                          onClick={handleAcceptMission}
+                          disabled={isAccepting}
+                          className="flex-[2] h-12 rounded-xl bg-[#ff4655] text-white hover:bg-[#cc2936] font-bold tracking-widest uppercase shadow-[0_0_20px_rgba(255,70,85,0.4)]"
+                        >
+                          {isAccepting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Accept Mission'}
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+
               </div>
 
-              <form onSubmit={handleGenerate} className="px-4 pb-4 space-y-4">
-                {inputType === 'text' ? (
-                  <Textarea
-                    value={payload}
-                    onChange={(e) => setPayload(e.target.value)}
-                    placeholder="Describe your objective in extreme detail... E.g. 'I need to master React Native gestures this weekend.'"
-                    className="min-h-[160px] bg-zinc-950/50 border-zinc-800 focus-visible:ring-[#ff4655]/50 text-base resize-none rounded-xl"
-                  />
-                ) : (
-                  <Input
-                    value={payload}
-                    onChange={(e) => setPayload(e.target.value)}
-                    placeholder="Paste a URL (YouTube, Article, Documentation)..."
-                    className="h-16 bg-zinc-950/50 border-zinc-800 focus-visible:ring-[#ff4655]/50 text-base rounded-xl"
-                  />
-                )}
-
-                <Button 
-                  type="submit" 
-                  disabled={!payload.trim() || isProcessing}
-                  className="w-full h-16 rounded-xl bg-[#ff4655] hover:bg-[#ff4655]/90 text-white font-teko text-2xl tracking-widest uppercase group relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,70,85,0.3)] disabled:opacity-50 disabled:hover:shadow-none"
-                >
-                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
-                  <span className="relative flex items-center justify-center gap-3">
-                    <Sparkles className="w-6 h-6" /> Generate Mission Blueprint
-                  </span>
-                </Button>
-              </form>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
-            >
-              {/* Mission Briefing */}
-              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 relative overflow-hidden shadow-2xl group">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-[#ff4655]/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
-                <div className="flex justify-between items-start mb-8 relative">
-                  <div className="max-w-[70%]">
-                    <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2 leading-none">{generatedQuest.quest.title}</h2>
-                    <p className="text-zinc-400 text-sm">{generatedQuest.quest.description}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <span className="px-3 py-1 bg-zinc-950 text-zinc-300 text-[10px] uppercase tracking-[0.2em] font-bold rounded-md border border-zinc-800 flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> {generatedQuest.quest.estimated_time_minutes} MIN
-                    </span>
-                    <span className="px-3 py-1 bg-[#ff4655]/10 text-[#ff4655] text-[10px] uppercase tracking-[0.2em] font-bold rounded-md border border-[#ff4655]/30 flex items-center gap-1">
-                      <Target className="w-3 h-3" /> LVL {generatedQuest.quest.difficulty}
+              {/* RIGHT COLUMN (Stats & Sidebar combined) */}
+              <div className="flex flex-col gap-6">
+                
+                {/* YOUR STATISTIC CARD */}
+                <div>
+                  <div className="flex justify-between items-end mb-4">
+                    <h2 className="text-2xl font-bold text-white tracking-wide">Your Statistic</h2>
+                    <span className="text-[#fca5a5] text-sm hover:text-white cursor-pointer transition-colors flex items-center gap-1">
+                      <ArrowRight className="w-4 h-4" />
                     </span>
                   </div>
-                </div>
 
-                {/* Steps Timeline */}
-                <div className="space-y-4 mt-8 relative">
-                  <div className="absolute left-6 top-4 bottom-4 w-px bg-zinc-800/50" />
-                  {generatedQuest.steps.map((step) => (
-                    <div key={step.order_index} className="flex gap-4 relative group/step">
-                      <div className="w-12 h-12 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0 group-hover/step:border-[#ff4655] transition-colors relative z-10 text-zinc-500 group-hover/step:text-[#ff4655] font-black text-lg">
-                        {step.order_index}
-                      </div>
-                      <div className="flex-1 bg-zinc-950/40 border border-zinc-800/50 rounded-xl p-4 hover:bg-zinc-900/80 transition-colors">
-                        <div className="flex justify-between items-center mb-1">
-                          <h3 className="text-lg font-bold text-zinc-200">{step.title}</h3>
-                          <span className="text-zinc-600 text-xs font-mono">{Math.round(step.estimated_time_seconds / 60)}m</span>
-                        </div>
-                        <p className="text-zinc-400 text-sm leading-relaxed">{step.instruction}</p>
-                        
-                        <div className="mt-3 flex items-center gap-2 text-[11px] font-mono text-[#ff4655]/80 bg-[#ff4655]/5 px-3 py-2 rounded-lg border border-[#ff4655]/10">
-                          <ShieldAlert className="w-3 h-3 shrink-0" />
-                          <span className="truncate">AI Verify: {step.ai_validation_prompt}</span>
-                        </div>
+                  <div className="bg-gradient-to-b from-[#2b0c13] to-[#1d0a0f] rounded-3xl p-6 shadow-xl relative overflow-hidden border border-white/5 h-[340px] flex flex-col items-center justify-center group cursor-pointer">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#ff4655]/10 blur-2xl rounded-full" />
+                    
+                    {/* Abstract Abstract Shape representing Stats */}
+                    <div className="relative w-48 h-48 mb-4">
+                      <div className="absolute inset-0 bg-gradient-to-tr from-[#ff4655] to-purple-500 rounded-[40%_60%_70%_30%/40%_50%_60%_50%] animate-[spin_8s_linear_infinite] opacity-50 mix-blend-screen" />
+                      <div className="absolute inset-2 bg-gradient-to-bl from-orange-500 to-[#ff4655] rounded-[60%_40%_30%_70%/60%_30%_70%_40%] animate-[spin_12s_linear_infinite_reverse] opacity-50 mix-blend-screen" />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center z-10 drop-shadow-xl">
+                        <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Total EXP</span>
+                        <span className="text-4xl font-black text-white">{rpgProfile?.total_exp || 0}</span>
                       </div>
                     </div>
-                  ))}
+
+                    <div className="flex w-full justify-between px-4 mt-auto">
+                      <div className="text-center">
+                        <div className="w-10 h-10 rounded-full bg-[#ff4655]/20 flex items-center justify-center mx-auto mb-2">
+                          <Activity className="w-5 h-5 text-[#ff4655]" />
+                        </div>
+                        <div className="text-white font-bold">{rpgProfile?.level || 1}</div>
+                        <div className="text-[10px] text-[#fca5a5] uppercase">Level</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-2">
+                          <Target className="w-5 h-5 text-purple-400" />
+                        </div>
+                        <div className="text-white font-bold">{rpgProfile?.multiplier || 1.0}x</div>
+                        <div className="text-[10px] text-[#fca5a5] uppercase">Multiplier</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center mx-auto mb-2">
+                          <Zap className="w-5 h-5 text-orange-400" />
+                        </div>
+                        <div className="text-white font-bold">{rpgProfile?.current_streak || 0}</div>
+                        <div className="text-[10px] text-[#fca5a5] uppercase">Day Streak</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="mt-8 flex gap-3">
-                  <Button
-                    onClick={() => setGeneratedQuest(null)}
-                    variant="outline"
-                    className="flex-1 h-14 rounded-xl border-zinc-700 bg-transparent text-zinc-400 hover:text-white hover:bg-zinc-800 font-bold tracking-wider"
-                  >
-                    ABORT
-                  </Button>
-                  <Button
-                    onClick={handleAcceptMission}
-                    disabled={isAccepting}
-                    className="flex-2 w-[60%] h-14 rounded-xl bg-[#ff4655] hover:bg-[#ff4655]/90 text-white font-teko text-2xl tracking-widest uppercase transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,70,85,0.4)]"
-                  >
-                    {isAccepting ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Crosshair className="w-5 h-5 mr-2" /> ACCEPT MISSION</>}
-                  </Button>
+                {/* MINI GUILD / FRIENDS SIDEBAR (Internal column) */}
+                <div className="flex-1 bg-[#2b0c13]/50 rounded-3xl p-4 border border-white/5 flex flex-col">
+                  <div className="flex justify-between items-center mb-4 px-2">
+                    <h3 className="text-white font-bold tracking-wide">Guild Activity</h3>
+                    <span className="w-5 h-5 rounded-full bg-[#ff4655] text-white text-[10px] flex items-center justify-center font-bold">3</span>
+                  </div>
+                  
+                  <div className="flex-1 space-y-4 overflow-y-auto scrollbar-hide px-2">
+                    {[1,2,3].map((i) => (
+                      <div key={i} className="flex items-center gap-3 group cursor-pointer">
+                        <div className="relative">
+                          <div className={`w-10 h-10 rounded-xl bg-zinc-800 border-2 ${i === 1 ? 'border-green-500' : 'border-transparent'} group-hover:border-[#ff4655] transition-colors`} />
+                          {i === 1 && <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[#2b0c13]" />}
+                        </div>
+                        <div>
+                          <div className="text-white text-sm font-bold group-hover:text-[#ff4655] transition-colors">Agent_{i}9X</div>
+                          <div className="text-[#fca5a5] text-xs">Completed Mission</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          )}
-        </div>
 
-        {/* RIGHT COLUMN: Activity & Leaderboard */}
-        <div className="lg:col-span-3 flex flex-col gap-6">
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-zinc-900/40 backdrop-blur-md border border-zinc-800/50 rounded-2xl p-6 shadow-2xl h-[400px] flex flex-col"
-          >
-            <div className="flex items-center gap-2 mb-6">
-              <Trophy className="w-5 h-5 text-yellow-500" />
-              <h3 className="font-bold text-white uppercase tracking-widest text-sm">Active Operations</h3>
-            </div>
-            <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50">
-              <Crosshair className="w-12 h-12 text-zinc-600 mb-4" />
-              <p className="text-zinc-400 text-sm uppercase tracking-widest font-bold">No Active Missions</p>
-              <p className="text-zinc-600 text-xs mt-1">Generate a quest to begin.</p>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-zinc-900/40 backdrop-blur-md border border-zinc-800/50 rounded-2xl p-6 shadow-2xl flex-1 flex flex-col"
-          >
-            <div className="flex items-center gap-2 mb-6">
-              <Activity className="w-5 h-5 text-cyan-500" />
-              <h3 className="font-bold text-white uppercase tracking-widest text-sm">System Logs</h3>
-            </div>
-            <div className="flex-1 overflow-hidden relative">
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-zinc-900/40 z-10 pointer-events-none" />
-              <div className="space-y-3 font-mono text-[10px] text-zinc-500">
-                <p><span className="text-green-500">[SYS]</span> System nominal.</p>
-                <p><span className="text-cyan-500">[AUTH]</span> User {rpgProfile?.username || 'GUEST'} verified.</p>
-                <p><span className="text-[#ff4655]">[AI]</span> Groq Engine initialized.</p>
-                <p><span className="text-zinc-400">[DAT]</span> Waiting for input...</p>
-                {isProcessing && <p className="text-yellow-500 animate-pulse">[AI] Processing raw intel...</p>}
-                {generatedQuest && <p className="text-green-500">[AI] Quest payload generated.</p>}
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
+        
+        {/* RIGHTMOST THIN SIDEBAR (Friends Icons) */}
+        <div className="w-20 bg-[#2b0c13] border-l border-[#1d0a0f] flex flex-col items-center py-8 justify-start gap-4 z-20 overflow-y-auto scrollbar-hide">
+          <div className="w-10 h-10 rounded-full bg-[#ff4655] flex items-center justify-center text-white font-black shrink-0 shadow-lg">
+            {username.charAt(0)}
+          </div>
+          <div className="w-full h-px bg-white/10 my-2" />
+          
+          {[
+            { c: 'border-green-500', st: 'In Game' },
+            { c: 'border-transparent', st: '' },
+            { c: 'border-transparent', st: '' },
+            { c: 'border-yellow-500', st: '' },
+            { c: 'border-transparent', st: '' },
+          ].map((u, idx) => (
+            <div key={idx} className="relative group cursor-pointer mb-2">
+              <div className={`w-10 h-10 rounded-xl bg-[#4d1723] border-2 ${u.c} hover:border-[#ff4655] transition-colors`} />
+              {u.st && (
+                <div className="absolute -bottom-2 inset-x-0 mx-auto w-fit px-1 py-0.5 bg-green-500 rounded text-[8px] font-bold text-white uppercase scale-0 group-hover:scale-100 transition-transform origin-bottom">
+                  {u.st}
+                </div>
+              )}
+            </div>
+          ))}
+          
+          <div className="w-10 h-10 rounded-full border border-dashed border-white/20 flex items-center justify-center text-white/50 hover:text-white hover:border-white/50 transition-colors cursor-pointer mt-auto">
+            <Plus className="w-4 h-4" />
+          </div>
+        </div>
+
       </div>
     </div>
   );
