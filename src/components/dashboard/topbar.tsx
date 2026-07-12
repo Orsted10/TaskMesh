@@ -35,7 +35,7 @@ export function Topbar() {
         <div className="flex items-center gap-4 cursor-pointer group">
           <div className="text-right hidden sm:block">
             <div className="text-white font-bold text-sm tracking-wider uppercase group-hover:text-[#ff4655] transition-colors">{displayName}</div>
-            <div className="text-zinc-500 text-[10px] font-mono uppercase">Level {rpgProfile?.level || 1} • {rpgProfile?.rank || 'Novice'}</div>
+            <div className="text-zinc-500 text-[10px] font-mono uppercase">Level {rpgProfile?.level || 1} • {rpgProfile?.title || 'Novice'}</div>
           </div>
           <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center overflow-hidden group-hover:border-[#ff4655] transition-colors shadow-lg">
             {user?.user_metadata?.avatar_url ? (
