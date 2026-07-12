@@ -28,7 +28,7 @@ CREATE TABLE users (
     avatar_url TEXT,
     level INTEGER DEFAULT 1,
     total_exp INTEGER DEFAULT 0,
-    skills JSONB DEFAULT '{"tech": 0, "fitness": 0, "civic": 0, "culinary": 0, "art": 0}',
+    skills JSONB DEFAULT '{"strength": 0, "intelligence": 0, "charisma": 0, "creativity": 0, "craftsmanship": 0, "willpower": 0}',
     current_streak INTEGER DEFAULT 0,
     max_streak INTEGER DEFAULT 0,
     multiplier FLOAT DEFAULT 1.0,

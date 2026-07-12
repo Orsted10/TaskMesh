@@ -2,179 +2,277 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Upload, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Sparkles, Link as LinkIcon, Type, Cpu, Crosshair, ChevronRight, ShieldAlert, Check, Loader2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/auth-context';
+import { supabase } from '@/lib/supabase-client';
 
-export default function Home() {
-  const [task, setTask] = useState('');
-  const [isTaskDeclared, setIsTaskDeclared] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationStatus, setVerificationStatus] = useState<'idle' | 'verified' | 'rejected'>('idle');
-  const [feedback, setFeedback] = useState('');
+type QuestStep = {
+  order_index: number;
+  title: string;
+  instruction: string;
+  estimated_time_seconds: number;
+  verification_type: string;
+  ai_validation_prompt: string;
+};
 
-  const handleDeclareTask = (e: React.FormEvent) => {
+type GeneratedQuest = {
+  quest: {
+    title: string;
+    description: string;
+    category: string;
+    difficulty: number;
+    estimated_time_minutes: number;
+  };
+  steps: QuestStep[];
+};
+
+export default function Dashboard() {
+  const { user } = useAuth();
+  const [inputType, setInputType] = useState<'text' | 'url'>('text');
+  const [payload, setPayload] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [generatedQuest, setGeneratedQuest] = useState<GeneratedQuest | null>(null);
+  const [isAccepting, setIsAccepting] = useState(false);
+
+  const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!task.trim()) return;
-    setIsTaskDeclared(true);
-    toast.success('Task declared. Awaiting proof of action.');
+    if (!payload.trim()) return;
+    
+    setIsProcessing(true);
+    setGeneratedQuest(null);
+
+    try {
+      const res = await fetch('/api/ai/quest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: inputType, payload }),
+      });
+
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || 'Failed to generate');
+
+      setGeneratedQuest(data);
+      toast.success('Mission Generated Successfully.');
+    } catch (err: any) {
+      toast.error('AI Engine Error', { description: err.message });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const simulateVerification = () => {
-    setIsVerifying(true);
-    // Simulate AI verification delay
-    setTimeout(() => {
-      setIsVerifying(false);
-      // Randomly verify or reject for demo purposes
-      const isSuccess = Math.random() > 0.5;
-      if (isSuccess) {
-        setVerificationStatus('verified');
-        setFeedback('Task successfully completed. Good job.');
-        toast.success('+50 EXP Gained!', {
-          description: 'Task verified by AI Judge.',
-        });
-      } else {
-        setVerificationStatus('rejected');
-        setFeedback('This image does not prove the task was completed. Try again.');
-        toast.error('Verification Failed', {
-          description: 'The AI Judge rejected your proof.',
-        });
-      }
-    }, 3000);
-  };
+  const handleAcceptMission = async () => {
+    if (!user || !generatedQuest) return;
+    setIsAccepting(true);
 
-  const handleReset = () => {
-    setTask('');
-    setIsTaskDeclared(false);
-    setVerificationStatus('idle');
-    setFeedback('');
+    try {
+      // 1. Save Quest
+      const { data: questData, error: questError } = await supabase
+        .from('quests')
+        .insert({
+          title: generatedQuest.quest.title,
+          description: generatedQuest.quest.description,
+          category: generatedQuest.quest.category,
+          difficulty: generatedQuest.quest.difficulty,
+          creator_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (questError) throw questError;
+
+      // 2. Save Steps
+      const stepsToInsert = generatedQuest.steps.map(step => ({
+        quest_id: questData.id,
+        order_index: step.order_index,
+        title: step.title,
+        instruction: step.instruction,
+        estimated_time_seconds: step.estimated_time_seconds,
+        verification_type: step.verification_type,
+        ai_validation_prompt: step.ai_validation_prompt,
+      }));
+
+      const { error: stepsError } = await supabase.from('quest_steps').insert(stepsToInsert);
+      if (stepsError) throw stepsError;
+
+      // 3. Create User Progress (Start the mission)
+      const { data: progressData, error: progressError } = await supabase
+        .from('user_quest_progress')
+        .insert({
+          user_id: user.id,
+          quest_id: questData.id,
+          status: 'in_progress',
+        })
+        .select()
+        .single();
+
+      if (progressError) throw progressError;
+
+      toast.success('Mission Accepted!', { description: 'Added to your active operations.' });
+      
+      // Reset for next mission
+      setGeneratedQuest(null);
+      setPayload('');
+
+    } catch (err: any) {
+      toast.error('Failed to accept mission', { description: err.message });
+    } finally {
+      setIsAccepting(false);
+    }
   };
 
   return (
-    <main className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 relative overflow-hidden bg-zinc-950 text-zinc-50">
-      {/* Sci-Fi Background Elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-zinc-900/50 via-zinc-950 to-zinc-950 pointer-events-none" />
-      <div className="absolute top-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent shadow-[0_0_15px_rgba(6,182,212,0.3)]" />
-      
-      <div className="z-10 w-full max-w-2xl space-y-8">
+    <main className="flex-1 flex flex-col items-center p-6 sm:p-12 relative overflow-hidden bg-zinc-950 text-zinc-50 min-h-screen pt-24">
+      {/* Grid Background */}
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03] pointer-events-none" />
+      <div className="absolute top-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#ff4655]/40 to-transparent shadow-[0_0_15px_rgba(255,70,85,0.4)]" />
+
+      <div className="z-10 w-full max-w-4xl space-y-12">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center space-y-2"
+          className="text-center space-y-3"
         >
-          <h1 className="text-4xl sm:text-6xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-zinc-100 to-zinc-500">
-            TaskMesh
+          <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-zinc-100 to-zinc-500 font-teko">
+            Command Center
           </h1>
-          <p className="text-zinc-400 tracking-widest text-sm uppercase">Proof of Action Engine</p>
+          <p className="text-[#ff4655] tracking-[0.3em] text-sm font-semibold">INITIALIZE NEW OPERATION</p>
         </motion.div>
 
-        <AnimatePresence mode="wait">
-          {!isTaskDeclared ? (
+        {/* Input Engine */}
+        {!generatedQuest && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-zinc-900/50 backdrop-blur-md border border-zinc-800 rounded-2xl overflow-hidden p-1 shadow-2xl relative"
+          >
+            {isProcessing && (
+              <div className="absolute inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm flex flex-col items-center justify-center space-y-4">
+                <Cpu className="w-12 h-12 text-[#ff4655] animate-pulse" />
+                <p className="text-[#ff4655] font-teko text-2xl tracking-widest uppercase animate-pulse">Groq Engine Computing...</p>
+              </div>
+            )}
+
+            <div className="flex p-2 gap-2 bg-zinc-950/50 border-b border-zinc-800/50">
+              <button
+                type="button"
+                onClick={() => setInputType('text')}
+                className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-wider transition-all duration-300 ${inputType === 'text' ? 'bg-[#ff4655]/10 text-[#ff4655] border border-[#ff4655]/30 shadow-[0_0_15px_rgba(255,70,85,0.1)]' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                <Type className="w-4 h-4" /> Raw Intel
+              </button>
+              <button
+                type="button"
+                onClick={() => setInputType('url')}
+                className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-wider transition-all duration-300 ${inputType === 'url' ? 'bg-[#ff4655]/10 text-[#ff4655] border border-[#ff4655]/30 shadow-[0_0_15px_rgba(255,70,85,0.1)]' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                <LinkIcon className="w-4 h-4" /> Data Link
+              </button>
+            </div>
+
+            <form onSubmit={handleGenerate} className="p-6 space-y-6">
+              {inputType === 'text' ? (
+                <Textarea
+                  value={payload}
+                  onChange={(e) => setPayload(e.target.value)}
+                  placeholder="Describe your objective in detail..."
+                  className="min-h-[150px] bg-zinc-950 border-zinc-800 focus-visible:ring-[#ff4655]/50 text-lg resize-none"
+                />
+              ) : (
+                <Input
+                  value={payload}
+                  onChange={(e) => setPayload(e.target.value)}
+                  placeholder="Paste a URL (YouTube, Article, Documentation)..."
+                  className="h-16 bg-zinc-950 border-zinc-800 focus-visible:ring-[#ff4655]/50 text-lg"
+                />
+              )}
+
+              <Button 
+                type="submit" 
+                disabled={!payload.trim() || isProcessing}
+                className="w-full h-16 bg-[#ff4655] hover:bg-[#ff4655]/90 text-white font-teko text-2xl tracking-widest uppercase group relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,70,85,0.3)]"
+              >
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+                <span className="relative flex items-center gap-2">
+                  <Sparkles className="w-6 h-6" /> Generate Mission
+                </span>
+              </Button>
+            </form>
+          </motion.div>
+        )}
+
+        {/* Generated Quest Output */}
+        <AnimatePresence>
+          {generatedQuest && (
             <motion.div
-              key="declare"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
             >
-              <form onSubmit={handleDeclareTask} className="relative group">
-                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200" />
-                <div className="relative flex items-center bg-zinc-900 rounded-xl border border-zinc-800 focus-within:border-cyan-500/50 shadow-2xl overflow-hidden">
-                  <Input
-                    value={task}
-                    onChange={(e) => setTask(e.target.value)}
-                    placeholder="What action will you take today?"
-                    className="flex-1 border-0 bg-transparent h-16 sm:h-20 text-lg sm:text-2xl px-6 focus-visible:ring-0 placeholder:text-zinc-600"
-                    autoFocus
-                  />
-                  <Button type="submit" size="lg" className="mr-3 h-12 sm:h-14 px-8 bg-zinc-100 text-zinc-900 hover:bg-zinc-200 text-sm sm:text-base tracking-wide font-semibold">
-                    INITIATE
+              {/* Mission Briefing */}
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 relative overflow-hidden shadow-2xl group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#ff4655]/10 rounded-full blur-3xl -mr-16 -mt-16" />
+                <div className="flex justify-between items-start mb-6 relative">
+                  <div>
+                    <h2 className="text-3xl font-bold text-white mb-2">{generatedQuest.quest.title}</h2>
+                    <p className="text-zinc-400 text-lg">{generatedQuest.quest.description}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="px-3 py-1 bg-zinc-800 text-zinc-300 text-xs uppercase tracking-widest font-bold rounded-md border border-zinc-700">
+                      Difficulty: {generatedQuest.quest.difficulty}/5
+                    </span>
+                    <span className="px-3 py-1 bg-[#ff4655]/20 text-[#ff4655] text-xs uppercase tracking-widest font-bold rounded-md border border-[#ff4655]/30">
+                      {generatedQuest.quest.category}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Steps Timeline */}
+                <div className="space-y-4 mt-10 relative">
+                  <div className="absolute left-6 top-4 bottom-4 w-px bg-zinc-800" />
+                  {generatedQuest.steps.map((step) => (
+                    <div key={step.order_index} className="flex gap-6 relative group/step">
+                      <div className="w-12 h-12 rounded-full bg-zinc-950 border-2 border-zinc-800 flex items-center justify-center shrink-0 group-hover/step:border-[#ff4655] transition-colors relative z-10 text-zinc-500 group-hover/step:text-[#ff4655] font-bold">
+                        {step.order_index}
+                      </div>
+                      <div className="flex-1 bg-zinc-950/50 border border-zinc-800 rounded-xl p-5 hover:bg-zinc-900 transition-colors">
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="text-xl font-bold text-zinc-100">{step.title}</h3>
+                          <span className="text-zinc-500 text-sm font-mono">{Math.round(step.estimated_time_seconds / 60)} min</span>
+                        </div>
+                        <p className="text-zinc-400 text-sm">{step.instruction}</p>
+                        
+                        <div className="mt-4 flex items-center gap-2 text-xs font-mono text-[#ff4655]/70 bg-[#ff4655]/5 px-3 py-2 rounded-md border border-[#ff4655]/10">
+                          <ShieldAlert className="w-4 h-4" />
+                          <span>AI Check: {step.ai_validation_prompt}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-10 flex gap-4">
+                  <Button
+                    onClick={() => setGeneratedQuest(null)}
+                    variant="outline"
+                    className="flex-1 h-14 border-zinc-700 text-zinc-400 hover:text-white"
+                  >
+                    ABORT
+                  </Button>
+                  <Button
+                    onClick={handleAcceptMission}
+                    disabled={isAccepting}
+                    className="flex-2 w-2/3 h-14 bg-[#ff4655] hover:bg-[#ff4655]/90 text-white font-teko text-2xl tracking-widest uppercase transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,70,85,0.4)]"
+                  >
+                    {isAccepting ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Crosshair className="w-5 h-5 mr-2" /> ACCEPT MISSION</>}
                   </Button>
                 </div>
-              </form>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="verify"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-sm shadow-2xl">
-                <CardHeader>
-                  <CardDescription className="text-zinc-400 uppercase tracking-wider text-xs font-semibold">Active Quest</CardDescription>
-                  <CardTitle className="text-2xl text-zinc-100">{task}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {verificationStatus === 'idle' && !isVerifying && (
-                    <div className="border-2 border-dashed border-zinc-700/50 rounded-xl p-12 flex flex-col items-center justify-center text-zinc-500 hover:bg-zinc-800/50 hover:border-zinc-600 transition-colors cursor-pointer group">
-                      <div className="bg-zinc-800 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform">
-                        <Upload className="w-8 h-8 text-zinc-400" />
-                      </div>
-                      <p className="font-medium text-zinc-300">Upload Proof of Action</p>
-                      <p className="text-sm mt-1">Drag and drop, or click to browse</p>
-                      
-                      {/* Temporary button to simulate upload for demo */}
-                      <Button onClick={simulateVerification} variant="secondary" className="mt-6 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border border-cyan-500/20">
-                        <Camera className="w-4 h-4 mr-2" /> Simulate Upload
-                      </Button>
-                    </div>
-                  )}
-
-                  {isVerifying && (
-                    <div className="py-16 flex flex-col items-center justify-center space-y-4">
-                      <Loader2 className="w-12 h-12 text-cyan-500 animate-spin" />
-                      <div className="text-center space-y-1">
-                        <p className="text-cyan-400 font-mono text-sm uppercase tracking-widest animate-pulse">AI Judge is analyzing...</p>
-                        <p className="text-zinc-500 text-xs font-mono">Comparing image data against task parameters</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {verificationStatus === 'verified' && (
-                    <motion.div 
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-6 flex flex-col items-center text-center space-y-4"
-                    >
-                      <div className="bg-emerald-500/20 p-3 rounded-full">
-                        <CheckCircle2 className="w-10 h-10 text-emerald-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-emerald-400 font-bold text-xl uppercase tracking-wider">Verified</h3>
-                        <p className="text-emerald-500/80 mt-1">{feedback}</p>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {verificationStatus === 'rejected' && (
-                    <motion.div 
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 flex flex-col items-center text-center space-y-4"
-                    >
-                      <div className="bg-red-500/20 p-3 rounded-full">
-                        <XCircle className="w-10 h-10 text-red-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-red-400 font-bold text-xl uppercase tracking-wider">Rejected</h3>
-                        <p className="text-red-500/80 mt-1">{feedback}</p>
-                      </div>
-                    </motion.div>
-                  )}
-
-                </CardContent>
-                {(verificationStatus === 'verified' || verificationStatus === 'rejected') && (
-                  <CardFooter className="bg-zinc-950/50 p-4 border-t border-zinc-800">
-                    <Button onClick={handleReset} variant="outline" className="w-full border-zinc-700 hover:bg-zinc-800 text-zinc-300">
-                      RETURN TO TERMINAL
-                    </Button>
-                  </CardFooter>
-                )}
-              </Card>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
