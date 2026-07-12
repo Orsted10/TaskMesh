@@ -195,3 +195,57 @@ for (let i = 18; i <= 120; i++) {
 }
 
 export const LOOT_POOL = generateLootPool()
+
+// ==========================================
+// DYNAMIC TIER AESTHETICS
+// ==========================================
+
+export function getTierAesthetic(tier: string) {
+  const t = (tier || '').toLowerCase();
+  
+  if (t.includes('boss') || t.includes('legendary') || t.includes('impossible') || t.includes('unique')) {
+    return {
+      text: "text-purple-400",
+      textDark: "dark:text-purple-400 text-purple-600",
+      bg: "bg-purple-500/10 dark:bg-purple-950/30",
+      border: "border-purple-500/30 dark:border-purple-500/50",
+      glow: "shadow-[0_0_20px_rgba(168,85,247,0.3)]",
+      primaryBorder: "border-purple-500",
+      accent: "bg-purple-500"
+    };
+  }
+  
+  if (t.includes('epic') || t.includes('extreme') || t.includes('hard') || t.includes('challenge')) {
+    return {
+      text: "text-orange-400",
+      textDark: "dark:text-orange-400 text-orange-600",
+      bg: "bg-orange-500/10 dark:bg-orange-950/30",
+      border: "border-orange-500/30 dark:border-orange-500/50",
+      glow: "shadow-[0_0_20px_rgba(249,115,22,0.3)]",
+      primaryBorder: "border-orange-500",
+      accent: "bg-orange-500"
+    };
+  }
+  
+  if (t.includes('medium') || t.includes('standard') || t.includes('weekly') || t.includes('monthly')) {
+    return {
+      text: "text-cyan-400",
+      textDark: "dark:text-cyan-400 text-cyan-600",
+      bg: "bg-cyan-500/10 dark:bg-cyan-950/30",
+      border: "border-cyan-500/30 dark:border-cyan-500/50",
+      glow: "shadow-[0_0_15px_rgba(6,182,212,0.2)]",
+      primaryBorder: "border-cyan-500",
+      accent: "bg-cyan-500"
+    };
+  }
+  
+  return {
+    text: "text-emerald-400",
+    textDark: "dark:text-emerald-400 text-emerald-600",
+    bg: "bg-emerald-500/10 dark:bg-emerald-950/30",
+    border: "border-emerald-500/30 dark:border-emerald-500/50",
+    glow: "shadow-[0_0_15px_rgba(16,185,129,0.2)]",
+    primaryBorder: "border-emerald-500",
+    accent: "bg-emerald-500"
+  };
+}

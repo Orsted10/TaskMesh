@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { PerformanceRadar } from '@/components/dashboard/performance-radar';
+import { getTierAesthetic } from '@/lib/rpg-data';
 
 export default function Dashboard() {
   const { user, rpgProfile, loading } = useAuth();
@@ -277,53 +278,73 @@ export default function Dashboard() {
                 </div>
 
                 <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2 mb-6">
-                  {generatedQuest.quests.map((quest: any, qIdx: number) => (
-                    <div key={qIdx} className="bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 relative overflow-hidden group">
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-zinc-300 dark:bg-zinc-800 group-hover:bg-[#ff4655] transition-colors" />
-                      
-                      <div className="flex justify-between items-start mb-2 pl-2">
-                        <div className="flex gap-2 items-center">
-                          <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border 
-                            ${quest.tier?.toLowerCase().includes('legendary') || quest.tier?.toLowerCase().includes('boss') 
-                              ? 'bg-purple-500/10 text-purple-500 border-purple-500/30' 
-                              : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700'}`}>
-                            {quest.tier || 'STANDARD'}
-                          </span>
-                          <span className="text-[10px] font-bold text-[#ff4655] uppercase tracking-widest bg-[#ff4655]/10 px-2 py-0.5 rounded border border-[#ff4655]/20">
-                            LVL {quest.difficulty}
-                          </span>
-                        </div>
-                        <span className="text-[10px] font-bold text-yellow-600 dark:text-yellow-500 uppercase tracking-widest flex items-center gap-1">
-                          + {quest.rewards?.xp || 100} EXP | {quest.rewards?.gold || 10} GOLD | {quest.rewards?.shine || 0} SHINE | {quest.rewards?.skillpoints || 0} SP
-                        </span>
-                      </div>
-                      
-                      <h4 className="font-teko text-2xl text-zinc-900 dark:text-white uppercase leading-none pl-2 mb-2 group-hover:text-[#ff4655] transition-colors">{quest.title}</h4>
-                      <p className="text-zinc-500 text-xs pl-2 mb-4">{quest.description}</p>
-                      
-                      {quest.rewards?.specific_skills && quest.rewards.specific_skills.length > 0 && (
-                        <div className="pl-2 flex gap-2 flex-wrap mb-4">
-                          {quest.rewards.specific_skills.map((skill: any, idx: number) => (
-                            <span key={idx} className="text-[9px] uppercase tracking-widest bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded">
-                              + {skill.value} {skill.name}
+                  {generatedQuest.quests.map((quest: any, qIdx: number) => {
+                    const aesthetic = getTierAesthetic(quest.tier);
+                    return (
+                      <div key={qIdx} className={`bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 relative overflow-hidden group transition-all duration-300 hover:scale-[1.01] hover:${aesthetic.glow}`}>
+                        {/* Glow / Accent Borders */}
+                        <div className={`absolute left-0 top-0 bottom-0 w-1 bg-zinc-300 dark:bg-zinc-800 group-hover:${aesthetic.accent} transition-colors duration-500`} />
+                        <div className={`absolute right-0 top-0 w-16 h-16 ${aesthetic.bg} blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
+                        
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 pl-2 gap-4 relative z-10">
+                          <div className="flex gap-2 items-center flex-wrap">
+                            <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded border ${aesthetic.bg} ${aesthetic.textDark} ${aesthetic.border} shadow-inner`}>
+                              {quest.tier || 'STANDARD'}
                             </span>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="pl-2 space-y-1">
-                        {quest.steps?.slice(0, 2).map((step: any, i: number) => (
-                          <div key={i} className="flex gap-3 text-[11px] text-zinc-500">
-                            <span className="text-zinc-400 dark:text-zinc-700 font-mono">0{i+1}</span>
-                            <span className="truncate">{step.title}</span>
+                            <span className="text-[10px] font-bold text-[#ff4655] uppercase tracking-widest bg-[#ff4655]/10 px-3 py-1 rounded border border-[#ff4655]/20 shadow-inner">
+                              LVL {quest.difficulty}
+                            </span>
+                            {quest.mission_type && (
+                              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                                {quest.mission_type}
+                              </span>
+                            )}
                           </div>
-                        ))}
-                        {quest.steps?.length > 2 && (
-                          <div className="text-[10px] text-zinc-400 dark:text-zinc-600 italic pl-6">+ {quest.steps.length - 2} more objectives</div>
+                          
+                          <div className="bg-zinc-900/50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-2 flex items-center gap-3 shadow-inner">
+                            <span className="text-[10px] font-bold text-yellow-600 dark:text-yellow-500 uppercase tracking-widest">
+                              <span className="text-zinc-500 mr-1">GOLD</span> +{quest.rewards?.gold || 10}
+                            </span>
+                            <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest">
+                              <span className="text-zinc-500 mr-1">SHINE</span> +{quest.rewards?.shine || 0}
+                            </span>
+                            <span className="text-[10px] font-bold text-[#ff4655] uppercase tracking-widest">
+                              <span className="text-zinc-500 mr-1">EXP</span> +{quest.rewards?.xp || 100}
+                            </span>
+                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+                              <span className="text-zinc-500 mr-1">SP</span> +{quest.rewards?.skillpoints || 0}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <h4 className={`font-teko text-3xl text-zinc-900 dark:text-white uppercase leading-none pl-2 mb-2 transition-colors duration-300 group-hover:${aesthetic.text}`}>{quest.title}</h4>
+                        <p className="text-zinc-500 text-sm pl-2 mb-6 max-w-3xl">{quest.description}</p>
+                        
+                        {quest.rewards?.specific_skills && quest.rewards.specific_skills.length > 0 && (
+                          <div className="pl-2 flex gap-2 flex-wrap mb-6">
+                            {quest.rewards.specific_skills.map((skill: any, idx: number) => (
+                              <span key={idx} className="text-[10px] font-bold uppercase tracking-widest bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 px-3 py-1 rounded shadow-[0_0_10px_rgba(6,182,212,0.1)]">
+                                +{skill.value} {skill.name}
+                              </span>
+                            ))}
+                          </div>
                         )}
+
+                        <div className="pl-2 space-y-2 relative z-10 bg-white/50 dark:bg-zinc-900/30 p-3 rounded-lg border border-gray-100 dark:border-zinc-800/50">
+                          <div className="text-[9px] text-zinc-400 uppercase tracking-widest mb-2 font-bold">Tactical Objectives</div>
+                          {quest.steps?.slice(0, 3).map((step: any, i: number) => (
+                            <div key={i} className="flex gap-3 text-xs text-zinc-600 dark:text-zinc-400 items-start">
+                              <span className={`font-mono text-[10px] mt-0.5 ${aesthetic.text}`}>0{i+1}</span>
+                              <span className="leading-tight">{step.title}</span>
+                            </div>
+                          ))}
+                          {quest.steps?.length > 3 && (
+                            <div className="text-[10px] text-zinc-400 dark:text-zinc-500 italic pl-6 mt-2">+ {quest.steps.length - 3} more hidden objectives</div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className="flex gap-4">
