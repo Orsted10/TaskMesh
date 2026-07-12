@@ -1,3 +1,5 @@
+create extension if not exists postgis schema extensions;
+
 -- Drop previous Phase 1 placeholder tables if they exist
 DROP TABLE IF EXISTS user_step_verifications CASCADE;
 DROP TABLE IF EXISTS user_quest_progress CASCADE;
