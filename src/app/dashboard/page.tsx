@@ -145,16 +145,16 @@ export default function Dashboard() {
     ? [...activeMissions].sort((a, b) => (b.quests?.difficulty || 0) - (a.quests?.difficulty || 0))[0]
     : null;
 
-  // Dynamic Background based on category
+  // Dynamic Background based on category - Using Abstract/Cyberpunk/Valorant style aesthetic
   const getHeroBackground = (category: string) => {
     switch (category?.toLowerCase()) {
-      case 'strength': return 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop';
-      case 'intelligence': return 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=2070&auto=format&fit=crop';
-      case 'charisma': return 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?q=80&w=2070&auto=format&fit=crop';
-      case 'creativity': return 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=2071&auto=format&fit=crop';
-      case 'craftsmanship': return 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=2070&auto=format&fit=crop';
-      case 'willpower': return 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1999&auto=format&fit=crop';
-      default: return 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop'; // Retro PC
+      case 'strength': return 'https://images.unsplash.com/photo-1614850715649-1d0106293cb1?q=80&w=2070&auto=format&fit=crop'; // Red neon abstract
+      case 'intelligence': return 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop'; // Cyber security / neural
+      case 'charisma': return 'https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=2070&auto=format&fit=crop'; // Neon abstract
+      case 'creativity': return 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2064&auto=format&fit=crop'; // 3D abstract liquid
+      case 'craftsmanship': return 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?q=80&w=2070&auto=format&fit=crop'; // Tech / circuit abstract
+      case 'willpower': return 'https://images.unsplash.com/photo-1604871000636-074fa5117945?q=80&w=2070&auto=format&fit=crop'; // Dark geometric monolith
+      default: return 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?q=80&w=2070&auto=format&fit=crop'; 
     }
   };
 
