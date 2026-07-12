@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Link as LinkIcon, Type, Cpu, Crosshair, ShieldAlert, Activity, User as UserIcon, Zap, Target, Trophy, Clock } from 'lucide-react';
+import { Sparkles, Link as LinkIcon, Type, Cpu, Crosshair, ShieldAlert, Activity, User as UserIcon, Zap, Target, Trophy, Clock, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
