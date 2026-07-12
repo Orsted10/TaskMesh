@@ -391,7 +391,7 @@ export default function RPGPage() {
 
       {/* ZONE 5: FINAL CTA & FOOTER */}
       <section className="relative bg-primary pt-32 pb-16 clip-angled-tl z-20 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay z-0 pointer-events-none" />
+        <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-20 mix-blend-overlay z-0 pointer-events-none" />
         
         {/* Decorative Background Elements */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0)_50%,rgba(0,0,0,0.15)_50%)] bg-[length:100%_4px] pointer-events-none opacity-40 z-0" />
