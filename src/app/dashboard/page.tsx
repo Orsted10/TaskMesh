@@ -145,6 +145,21 @@ export default function Dashboard() {
     ? [...activeMissions].sort((a, b) => (b.quests?.difficulty || 0) - (a.quests?.difficulty || 0))[0]
     : null;
 
+  // Dynamic Background based on category
+  const getHeroBackground = (category: string) => {
+    switch (category?.toLowerCase()) {
+      case 'strength': return 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop';
+      case 'intelligence': return 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=2070&auto=format&fit=crop';
+      case 'charisma': return 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?q=80&w=2070&auto=format&fit=crop';
+      case 'creativity': return 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=2071&auto=format&fit=crop';
+      case 'craftsmanship': return 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=2070&auto=format&fit=crop';
+      case 'willpower': return 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1999&auto=format&fit=crop';
+      default: return 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop'; // Retro PC
+    }
+  };
+
+  const heroBg = featuredMission ? getHeroBackground(featuredMission.quests?.category) : getHeroBackground('default');
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
       
@@ -152,37 +167,53 @@ export default function Dashboard() {
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative w-full h-[300px] bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden group shadow-2xl"
+        className="relative w-full h-[350px] bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden group shadow-[0_0_50px_rgba(255,70,85,0.1)]"
       >
         {/* Background Image / Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent z-10" />
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-1000 mix-blend-luminosity" />
+        <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/90 to-zinc-950/40 z-10" />
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-50 group-hover:scale-105 transition-transform duration-[20s] mix-blend-luminosity ease-linear"
+          style={{ backgroundImage: `url('${heroBg}')` }}
+        />
         <div className="absolute inset-0 bg-[#ff4655]/10 z-10 mix-blend-overlay" />
+        
+        {/* Animated Cyber Grid */}
+        <div className="absolute inset-0 z-10 opacity-30 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
         {/* Content */}
-        <div className="relative z-20 h-full p-8 md:p-12 flex flex-col justify-center">
-          <div className="inline-flex items-center gap-2 mb-4">
+        <div className="relative z-20 h-full p-8 md:p-14 flex flex-col justify-center max-w-3xl">
+          <div className="inline-flex items-center gap-3 mb-6 bg-zinc-950/50 w-fit px-4 py-2 rounded-full border border-zinc-800/80 backdrop-blur-sm">
             <span className="w-2 h-2 bg-[#ff4655] rounded-full animate-pulse shadow-[0_0_10px_#ff4655]" />
-            <span className="text-[#ff4655] text-xs font-bold tracking-[0.2em] uppercase">Priority Protocol</span>
+            <span className="text-zinc-300 text-xs font-bold tracking-[0.2em] uppercase">
+              {featuredMission ? 'Active Priority Protocol' : 'System Awaiting Directives'}
+            </span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-teko text-white uppercase leading-none drop-shadow-lg mb-2">
+          <h1 className="text-6xl md:text-8xl font-teko text-white uppercase leading-none drop-shadow-2xl mb-4 tracking-wide group-hover:text-[#ff4655] transition-colors duration-500">
             {featuredMission ? featuredMission.quests?.title : 'DEFEAT TUTORIAL HELL'}
           </h1>
           
-          <p className="text-zinc-400 max-w-xl text-sm md:text-base mb-8">
+          <p className="text-zinc-400 text-base md:text-lg mb-10 font-light max-w-xl">
             {featuredMission 
               ? 'Your high-priority mission is currently active. Engage now to secure your EXP and cryptographic proof of action.' 
               : 'Generate your first mission to begin your ascent. Convert any task, tutorial, or goal into a highly structured RPG quest.'}
           </p>
 
-          <Button 
+          <button 
             onClick={() => featuredMission ? router.push(`/mission/${featuredMission.quests?.id}`) : null}
-            className="w-fit bg-[#ff4655] hover:bg-[#ff4655]/90 text-white font-bold tracking-widest uppercase rounded-lg px-8 h-12"
+            className="group/btn relative w-fit h-14 bg-[#ff4655] text-white font-teko text-2xl tracking-[0.15em] uppercase px-10 overflow-hidden"
+            style={{ clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)' }}
           >
-            <Play className="w-4 h-4 mr-2 fill-current" />
-            {featuredMission ? 'Resume Operation' : 'Initialize Generator'}
-          </Button>
+            <div className="absolute inset-0 bg-white translate-y-[100%] group-hover/btn:translate-y-0 transition-transform duration-300 ease-in-out z-0" />
+            <div className="relative z-10 flex items-center gap-3 group-hover/btn:text-[#ff4655] transition-colors duration-300">
+              <Play className="w-5 h-5 fill-current" />
+              {featuredMission ? 'Resume Operation' : 'Initialize Generator'}
+            </div>
+            
+            {/* Glitch sub-element */}
+            <div className="absolute top-0 right-0 w-2 h-2 bg-zinc-950 z-20 group-hover/btn:bg-[#ff4655] transition-colors" />
+            <div className="absolute bottom-0 left-0 w-2 h-2 bg-zinc-950 z-20 group-hover/btn:bg-[#ff4655] transition-colors" />
+          </button>
         </div>
       </motion.div>
 
@@ -275,31 +306,37 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6"
+            className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 relative overflow-hidden"
           >
-            <div className="flex items-center gap-2 mb-6">
-              <Activity className="w-5 h-5 text-cyan-500" />
-              <h2 className="font-teko text-2xl text-white uppercase tracking-wider">Global Intel Feed</h2>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-3xl" />
+            
+            <div className="flex items-center gap-3 mb-6 relative z-10">
+              <div className="p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
+                <Activity className="w-5 h-5 text-cyan-400" />
+              </div>
+              <h2 className="font-teko text-3xl text-white uppercase tracking-wider">Global Intel Feed</h2>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-3 relative z-10">
               {[
-                { user: 'Kael', action: 'completed mission', quest: 'Advanced Next.js Routing', time: '2m ago', color: 'text-[#ff4655]' },
-                { user: 'Sova', action: 'accepted bounty', quest: 'Fix Postgres RLS Policies', time: '15m ago', color: 'text-cyan-500' },
-                { user: 'Viper', action: 'leveled up to', quest: 'Level 12', time: '1h ago', color: 'text-green-500' },
+                { user: 'Kael', action: 'completed mission', quest: 'Advanced Next.js Routing', time: '2m ago', color: 'text-[#ff4655]', bg: 'bg-[#ff4655]/10', border: 'border-[#ff4655]/20' },
+                { user: 'Sova', action: 'accepted bounty', quest: 'Fix Postgres RLS Policies', time: '15m ago', color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/20' },
+                { user: 'Viper', action: 'leveled up to', quest: 'Level 12', time: '1h ago', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+                { user: 'Omen', action: 'gained 500 EXP from', quest: 'Backend Optimization', time: '3h ago', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
               ].map((item, i) => (
-                <div key={i} className="flex items-center justify-between p-4 bg-zinc-950/50 border border-zinc-800/50 rounded-xl hover:bg-zinc-900 transition-colors">
+                <div key={i} className="flex items-center justify-between p-4 bg-zinc-950/80 border border-zinc-800/80 rounded-xl hover:border-zinc-700 hover:bg-zinc-900 transition-all group">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-zinc-500">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white ${item.bg} ${item.border} border shadow-inner`}>
                       {item.user.charAt(0)}
                     </div>
                     <div>
-                      <p className="text-sm text-zinc-300">
-                        <span className="font-bold text-white">{item.user}</span> {item.action} <span className={item.color}>{item.quest}</span>
+                      <p className="text-sm text-zinc-400">
+                        <span className="font-bold text-zinc-200 group-hover:text-white transition-colors">{item.user}</span> {item.action}{' '}
+                        <span className={`font-medium ${item.color}`}>{item.quest}</span>
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs text-zinc-600 font-mono">{item.time}</span>
+                  <span className="text-xs text-zinc-600 font-mono bg-zinc-900 px-2 py-1 rounded border border-zinc-800">{item.time}</span>
                 </div>
               ))}
             </div>
