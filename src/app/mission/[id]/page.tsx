@@ -488,7 +488,7 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                         <motion.div
                           initial={{ scale: 0, rotate: -180 }}
                           animate={{ scale: 1, rotate: 0 }}
-                          type="spring"
+                          transition={{ type: "spring" }}
                         >
                           <CheckCircle className={`w-10 h-10 ${aesthetic.text} drop-shadow-[0_0_12px_currentColor]`} />
                         </motion.div>
