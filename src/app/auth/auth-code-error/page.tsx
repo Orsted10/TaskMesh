@@ -1,15 +1,29 @@
 "use client"
 
-import { Suspense } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Shield, AlertTriangle } from "lucide-react"
 
 function ErrorDetails() {
   const searchParams = useSearchParams()
-  // Supabase often puts errors in the URL hash, but Next.js searchParams reads the query.
-  // We can try to read both or just show a generic message.
-  const errorDesc = searchParams.get("error_description") || "Unknown authentication error occurred."
+  const [errorDesc, setErrorDesc] = useState("Unknown authentication error occurred.")
+
+  useEffect(() => {
+    // Supabase OAuth errors are often returned in the URL hash
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const desc = hashParams.get("error_description")
+      if (desc) {
+        setErrorDesc(decodeURIComponent(desc.replace(/\+/g, ' ')))
+      }
+    } else {
+      const desc = searchParams.get("error_description")
+      if (desc) {
+        setErrorDesc(desc)
+      }
+    }
+  }, [searchParams])
 
   return (
     <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-md">
