@@ -149,27 +149,58 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
     }
     setCompletedSteps(newSet); // Optimistic UI update
 
-    // Upsert into DB
+    // Upsert into DB (manually via select then update/insert to avoid unique constraint errors)
     const currentNotes = notesData[stepId] || '';
+    const newStatus = isCurrentlyDone ? 'pending' : 'verified';
     
-    await supabase.from('user_step_verifications').upsert({
-      progress_id: progressId,
-      step_id: stepId,
-      status: isCurrentlyDone ? 'pending' : 'verified',
-      metadata: { notes: currentNotes }
-    }, { onConflict: 'progress_id, step_id' });
+    const { data: existing } = await supabase
+      .from('user_step_verifications')
+      .select('id')
+      .eq('progress_id', progressId)
+      .eq('step_id', stepId)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase.from('user_step_verifications').update({
+        status: newStatus,
+        metadata: { notes: currentNotes }
+      }).eq('id', existing.id);
+    } else {
+      await supabase.from('user_step_verifications').insert({
+        progress_id: progressId,
+        step_id: stepId,
+        status: newStatus,
+        metadata: { notes: currentNotes }
+      });
+    }
   };
 
   const handleSaveNote = async (stepId: string, note: string) => {
     if (!progressId) return;
     setSavingNote(prev => ({ ...prev, [stepId]: true }));
     const isDone = completedSteps.has(stepId);
-    await supabase.from('user_step_verifications').upsert({
-         progress_id: progressId,
-         step_id: stepId,
-         status: isDone ? 'verified' : 'pending',
-         metadata: { notes: note }
-    }, { onConflict: 'progress_id, step_id' });
+    const newStatus = isDone ? 'verified' : 'pending';
+
+    const { data: existing } = await supabase
+      .from('user_step_verifications')
+      .select('id')
+      .eq('progress_id', progressId)
+      .eq('step_id', stepId)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase.from('user_step_verifications').update({
+        status: newStatus,
+        metadata: { notes: note }
+      }).eq('id', existing.id);
+    } else {
+      await supabase.from('user_step_verifications').insert({
+        progress_id: progressId,
+        step_id: stepId,
+        status: newStatus,
+        metadata: { notes: note }
+      });
+    }
     toast.success('Notes Secured!');
     setSavingNote(prev => ({ ...prev, [stepId]: false }));
   };
@@ -569,10 +600,10 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                       <div className={`inline-flex items-center gap-3 text-xs font-mono px-4 py-2.5 rounded-lg border shadow-sm mb-6 ${
                         isDone 
                           ? `bg-white dark:bg-zinc-900 ${aesthetic.textDark} border-gray-200 dark:border-zinc-700` 
-                          : 'bg-gray-50 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400 border-gray-200 dark:border-zinc-800'
+                          : 'bg-gray-50 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 border-gray-300 dark:border-zinc-700'
                       } transition-colors`}>
-                        <Fingerprint className={`w-4 h-4 ${isDone ? aesthetic.text : 'text-zinc-400'}`} /> 
-                        <span><span className="font-bold opacity-50 mr-2">VERIFY:</span> {step.ai_validation_prompt}</span>
+                        <Fingerprint className={`w-4 h-4 ${isDone ? aesthetic.text : 'text-zinc-600 dark:text-zinc-400'}`} /> 
+                        <span><span className="font-bold opacity-60 mr-2">VERIFY:</span> {step.ai_validation_prompt}</span>
                       </div>
 
                       {/* ACTION BAR */}
@@ -587,7 +618,7 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                                 handleTeachMe(step);
                               }
                             }}
-                            className={`text-xs uppercase tracking-widest font-bold ${activeAction[step.id] === 'teach' ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500' : 'text-zinc-500 border-zinc-200 dark:border-zinc-800'}`}
+                            className={`text-xs uppercase tracking-widest font-bold ${activeAction[step.id] === 'teach' ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500' : 'text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
                           >
                             <BookOpen className="w-3.5 h-3.5 mr-2" /> Teach Me
                           </Button>
@@ -595,7 +626,7 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                             variant="outline" 
                             size="sm"
                             onClick={() => setActiveAction(prev => ({ ...prev, [step.id]: prev[step.id] === 'notes' ? null : 'notes' }))}
-                            className={`text-xs uppercase tracking-widest font-bold ${activeAction[step.id] === 'notes' ? 'bg-amber-500/10 text-amber-500 border-amber-500' : 'text-zinc-500 border-zinc-200 dark:border-zinc-800'}`}
+                            className={`text-xs uppercase tracking-widest font-bold ${activeAction[step.id] === 'notes' ? 'bg-amber-500/10 text-amber-500 border-amber-500' : 'text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
                           >
                             <PenLine className="w-3.5 h-3.5 mr-2" /> Mission Logs
                           </Button>
@@ -603,7 +634,7 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                             variant="outline" 
                             size="sm"
                             onClick={() => setActiveAction(prev => ({ ...prev, [step.id]: prev[step.id] === 'resources' ? null : 'resources' }))}
-                            className={`text-xs uppercase tracking-widest font-bold ${activeAction[step.id] === 'resources' ? 'bg-cyan-500/10 text-cyan-500 border-cyan-500' : 'text-zinc-500 border-zinc-200 dark:border-zinc-800'}`}
+                            className={`text-xs uppercase tracking-widest font-bold ${activeAction[step.id] === 'resources' ? 'bg-cyan-500/10 text-cyan-500 border-cyan-500' : 'text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
                           >
                             <ExternalLink className="w-3.5 h-3.5 mr-2" /> Resources
                           </Button>
