@@ -276,10 +276,10 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
         </motion.div>
       </div>
 
-      <div className="max-w-7xl mx-auto w-full p-6 md:p-12 relative z-10 pt-20 flex-grow flex flex-col xl:flex-row gap-16">
+      <div className="max-w-7xl mx-auto w-full p-6 md:p-12 relative z-10 pt-20 flex-grow grid grid-cols-1 xl:grid-cols-2 gap-16">
         
         {/* LEFT COLUMN: Mission Briefing & Stats */}
-        <div className="flex-1 flex flex-col relative z-20">
+        <div className="flex flex-col relative z-20 w-full min-w-0">
           
           <Button 
             variant="ghost" 
@@ -404,7 +404,7 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
         </div>
 
         {/* RIGHT COLUMN: Objectives & Extraction */}
-        <div className="flex-1 flex flex-col w-full relative z-20">
+        <div className="flex flex-col relative z-20 w-full min-w-0">
           
           <div className="flex items-center justify-between mb-8 border-b border-gray-200 dark:border-zinc-800 pb-4">
             <h2 className="font-teko text-4xl md:text-5xl uppercase tracking-widest text-zinc-900 dark:text-white flex items-center gap-4">
@@ -438,27 +438,32 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                     transition={{ delay: idx * 0.1, type: "spring", stiffness: 100 }}
                     key={step.id}
                     onClick={() => toggleStep(step.id)}
-                    className={`relative p-8 rounded-2xl flex gap-6 cursor-pointer transition-all duration-300 group hover:-translate-y-1 shadow-lg border ${
+                    className={`relative p-8 rounded-2xl flex gap-6 cursor-pointer transition-all duration-500 group hover:-translate-y-1 shadow-2xl border ${
                       isDone 
-                        ? `bg-zinc-50 dark:bg-zinc-950/80 ${aesthetic.primaryBorder} shadow-xl backdrop-blur-md` 
-                        : 'bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 hover:border-gray-400 dark:hover:border-zinc-600'
+                        ? `bg-zinc-50 dark:bg-zinc-950/90 ${aesthetic.primaryBorder} shadow-[0_0_30px_rgba(var(--color),0.1)] backdrop-blur-xl` 
+                        : 'bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-gray-300 dark:border-zinc-700/50 hover:border-gray-400 dark:hover:border-zinc-500 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)]'
                     }`}
                   >
                     {isDone && (
-                      <div className={`absolute inset-0 ${aesthetic.accent} opacity-[0.03] dark:opacity-5 blur-xl pointer-events-none rounded-2xl`} />
+                      <div className={`absolute inset-0 ${aesthetic.accent} opacity-[0.04] dark:opacity-[0.07] blur-2xl pointer-events-none rounded-2xl`} />
                     )}
                     
-                    <div className="flex-shrink-0 relative z-10 bg-white dark:bg-zinc-950 rounded-full p-1 self-start shadow-sm border border-gray-100 dark:border-zinc-800">
+                    <div className="flex-shrink-0 relative z-10 bg-white/50 dark:bg-zinc-950/80 rounded-full p-1 self-start shadow-inner border border-gray-200 dark:border-zinc-800 backdrop-blur-md">
                       {isDone ? (
                         <motion.div
                           initial={{ scale: 0, rotate: -180 }}
                           animate={{ scale: 1, rotate: 0 }}
                           transition={{ type: "spring" }}
                         >
-                          <CheckCircle className={`w-12 h-12 ${aesthetic.text} drop-shadow-[0_0_12px_currentColor]`} />
+                          <CheckCircle className={`w-12 h-12 ${aesthetic.text} drop-shadow-[0_0_15px_currentColor]`} />
                         </motion.div>
                       ) : (
-                        <div className="w-12 h-12 rounded-full border-2 border-gray-300 dark:border-zinc-700 flex items-center justify-center text-gray-500 dark:text-zinc-500 font-teko text-3xl group-hover:border-zinc-500 dark:group-hover:border-zinc-400 group-hover:text-zinc-800 dark:group-hover:text-zinc-200 transition-colors">
+                        <div className="relative w-12 h-12 rounded-full flex items-center justify-center text-gray-600 dark:text-zinc-400 font-teko text-3xl group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors">
+                          <motion.div 
+                            animate={{ rotate: 360 }} 
+                            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                            className="absolute inset-0 rounded-full border-2 border-gray-400 dark:border-zinc-600 border-dashed opacity-50 group-hover:opacity-100 group-hover:border-zinc-400"
+                          />
                           {idx + 1}
                         </div>
                       )}
@@ -502,8 +507,8 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
               disabled={completing || completedSteps.size < steps.length}
               className={`w-full h-32 rounded-3xl font-teko text-5xl md:text-6xl tracking-[0.2em] uppercase transition-all duration-500 relative overflow-hidden z-10 group border-2 ${
                 completedSteps.size === steps.length
-                  ? `${aesthetic.accent} hover:opacity-90 text-white ${aesthetic.glow} hover:-translate-y-2 border-transparent`
-                  : 'bg-white dark:bg-zinc-900 text-gray-400 dark:text-zinc-600 cursor-not-allowed border-gray-200 dark:border-zinc-800 shadow-sm'
+                  ? `${aesthetic.accent} hover:opacity-90 text-white ${aesthetic.glow} hover:-translate-y-2 border-transparent shadow-2xl`
+                  : 'bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,255,255,0.03)_10px,rgba(255,255,255,0.03)_20px)] dark:bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,255,255,0.02)_10px,rgba(255,255,255,0.02)_20px)] bg-zinc-100 dark:bg-zinc-900/60 text-zinc-500 dark:text-zinc-500 cursor-not-allowed border-zinc-300 dark:border-zinc-800/80 shadow-inner backdrop-blur-md'
               }`}
             >
               {/* Button Glitch / Scanline overlay */}
@@ -522,7 +527,11 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                     animate={completedSteps.size === steps.length ? { rotate: 360 } : {}} 
                     transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                   >
-                    <Crosshair className={`w-12 h-12 md:w-16 md:h-16 ${completedSteps.size === steps.length ? 'text-white' : 'text-gray-400 dark:text-zinc-600'}`} />
+                    {completedSteps.size === steps.length ? (
+                      <Crosshair className={`w-12 h-12 md:w-16 md:h-16 text-white`} />
+                    ) : (
+                      <AlertTriangle className={`w-12 h-12 md:w-16 md:h-16 text-zinc-400 dark:text-zinc-600 opacity-50`} />
+                    )}
                   </motion.div>
                   <span className="mt-2">
                     {completedSteps.size === steps.length ? 'EXTRACT LOOT' : 'SECURE OBJECTIVES'}
