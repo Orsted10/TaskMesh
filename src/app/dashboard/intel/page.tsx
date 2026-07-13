@@ -47,7 +47,7 @@ export default function GlobalIntelPage() {
                     <span className="text-[9px] text-zinc-600 font-mono">{log.time}</span>
                   </div>
                   <div className="font-teko text-xl text-white uppercase tracking-wider flex items-center gap-2">
-                    <span className={\`w-1.5 h-1.5 rounded-full \${log.color.replace('text', 'bg')}\`} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${log.color.replace('text', 'bg')}`} />
                     {log.action}
                   </div>
                 </div>
@@ -110,7 +110,7 @@ export default function GlobalIntelPage() {
                 { title: 'Fix Pothole #402', corp: 'Civic Guild', reward: '300 EXP', loc: 'Northside', rarity: 'border-blue-500/50' },
                 { title: 'Security Audit', corp: 'Tech Corp', reward: '$500 + 2500 EXP', loc: 'Remote', rarity: 'border-yellow-500/50' },
               ].map((bounty, i) => (
-                <div key={i} className={\`bg-black border \${bounty.rarity} p-6 rounded-xl relative overflow-hidden group hover:bg-zinc-900/50 transition-colors cursor-pointer\`}>
+                <div key={i} className={`bg-black border ${bounty.rarity} p-6 rounded-xl relative overflow-hidden group hover:bg-zinc-900/50 transition-colors cursor-pointer`}>
                   <div className="flex justify-between items-start mb-4">
                     <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono flex items-center gap-1">
                       <MapPin className="w-3 h-3" /> {bounty.loc}

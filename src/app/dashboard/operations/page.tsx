@@ -14,17 +14,17 @@ export default function ActiveOperationsPage() {
         <h1 className="text-5xl font-teko text-white uppercase tracking-wider">Active Operations</h1>
         
         <div className="ml-auto flex items-center gap-3 bg-zinc-950 p-2 rounded-xl border border-zinc-800">
-          <ShieldAlert className={\`w-5 h-5 \${hardcoreMode ? 'text-red-500 animate-pulse' : 'text-zinc-600'}\`} />
+          <ShieldAlert className={`w-5 h-5 ${hardcoreMode ? 'text-red-500 animate-pulse' : 'text-zinc-600'}`} />
           <span className="text-[10px] font-bold text-white uppercase tracking-widest font-mono">
             Permadeath Mode
           </span>
           <button 
             onClick={() => setHardcoreMode(!hardcoreMode)}
-            className={\`w-12 h-6 rounded-full relative transition-colors \${hardcoreMode ? 'bg-red-500/20 border border-red-500/50' : 'bg-zinc-800 border border-zinc-700'}\`}
+            className={`w-12 h-6 rounded-full relative transition-colors ${hardcoreMode ? 'bg-red-500/20 border border-red-500/50' : 'bg-zinc-800 border border-zinc-700'}`}
           >
             <motion.div 
               animate={{ x: hardcoreMode ? 24 : 2 }}
-              className={\`absolute top-1 bottom-1 w-4 rounded-full \${hardcoreMode ? 'bg-red-500' : 'bg-zinc-500'}\`}
+              className={`absolute top-1 bottom-1 w-4 rounded-full ${hardcoreMode ? 'bg-red-500' : 'bg-zinc-500'}`}
             />
           </button>
         </div>

@@ -36,7 +36,7 @@ export default function SettingsPage() {
               <div 
                 key={persona.id}
                 onClick={() => setActivePersona(persona.id)}
-                className={\`p-4 rounded-xl border cursor-pointer transition-all flex flex-col gap-2 relative \${activePersona === persona.id ? 'bg-[#ff4655]/10 border-[#ff4655]' : 'bg-black border-zinc-800 hover:border-zinc-600'}\`}
+                className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col gap-2 relative ${activePersona === persona.id ? 'bg-[#ff4655]/10 border-[#ff4655]' : 'bg-black border-zinc-800 hover:border-zinc-600'}`}
               >
                 {activePersona === persona.id && (
                   <div className="absolute top-2 right-2 flex items-center gap-1">
@@ -72,11 +72,11 @@ export default function SettingsPage() {
               <div key={i} className="bg-black border border-zinc-800 p-4 rounded-xl flex items-center justify-between">
                 <div>
                   <h4 className="font-teko text-xl text-white uppercase">{hardware.name}</h4>
-                  <div className={\`text-[10px] font-mono uppercase tracking-widest \${hardware.active ? 'text-cyan-500' : 'text-zinc-600'}\`}>
+                  <div className={`text-[10px] font-mono uppercase tracking-widest ${hardware.active ? 'text-cyan-500' : 'text-zinc-600'}`}>
                     {hardware.status}
                   </div>
                 </div>
-                <button className={\`px-4 py-2 rounded text-[10px] font-bold font-mono uppercase tracking-widest transition-colors \${hardware.active ? 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-700' : 'bg-cyan-500 text-black hover:bg-cyan-400'}\`}>
+                <button className={`px-4 py-2 rounded text-[10px] font-bold font-mono uppercase tracking-widest transition-colors ${hardware.active ? 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-700' : 'bg-cyan-500 text-black hover:bg-cyan-400'}`}>
                   {hardware.active ? 'Unlink' : 'Connect'}
                 </button>
               </div>

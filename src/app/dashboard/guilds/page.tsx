@@ -18,14 +18,14 @@ export default function GuildsPage() {
         <div className="md:ml-auto flex items-center gap-2">
           <button 
             onClick={() => setActiveTab('leaderboard')}
-            className={\`px-6 py-2 rounded font-teko text-xl uppercase tracking-widest transition-colors \${activeTab === 'leaderboard' ? 'bg-fuchsia-500 text-black' : 'bg-zinc-900 text-zinc-400 hover:text-white'}\`}
+            className={`px-6 py-2 rounded font-teko text-xl uppercase tracking-widest transition-colors ${activeTab === 'leaderboard' ? 'bg-fuchsia-500 text-black' : 'bg-zinc-900 text-zinc-400 hover:text-white'}`}
           >
             <Swords className="w-4 h-4 inline-block mr-2 -mt-1" />
             Faction Wars
           </button>
           <button 
             onClick={() => setActiveTab('base')}
-            className={\`px-6 py-2 rounded font-teko text-xl uppercase tracking-widest transition-colors \${activeTab === 'base' ? 'bg-fuchsia-500 text-black' : 'bg-zinc-900 text-zinc-400 hover:text-white'}\`}
+            className={`px-6 py-2 rounded font-teko text-xl uppercase tracking-widest transition-colors ${activeTab === 'base' ? 'bg-fuchsia-500 text-black' : 'bg-zinc-900 text-zinc-400 hover:text-white'}`}
           >
             <Castle className="w-4 h-4 inline-block mr-2 -mt-1" />
             Guild Base
@@ -62,15 +62,15 @@ export default function GuildsPage() {
                     { rank: 4, name: 'Void Walkers', spec: 'General', xp: '8.9M', color: 'text-zinc-300', bg: 'bg-transparent' },
                     { rank: 5, name: 'Synthetix', spec: 'Data Science', xp: '7.5M', color: 'text-zinc-300', bg: 'bg-transparent' },
                   ].map((guild) => (
-                    <tr key={guild.rank} className={\`hover:bg-zinc-900/50 transition-colors \${guild.rank === 1 ? 'border-l-4 border-l-fuchsia-500' : ''}\`}>
+                    <tr key={guild.rank} className={`hover:bg-zinc-900/50 transition-colors ${guild.rank === 1 ? 'border-l-4 border-l-fuchsia-500' : ''}`}>
                       <td className="px-6 py-4">
-                        <span className={\`font-teko text-2xl \${guild.color}\`}>#{guild.rank}</span>
+                        <span className={`font-teko text-2xl ${guild.color}`}>#{guild.rank}</span>
                       </td>
                       <td className="px-6 py-4">
                         <span className="font-teko text-2xl text-white uppercase tracking-wider">{guild.name}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={\`text-[10px] font-mono uppercase tracking-widest px-2 py-1 rounded \${guild.bg} border \${guild.bg.replace('bg', 'border')}\`}>
+                        <span className={`text-[10px] font-mono uppercase tracking-widest px-2 py-1 rounded ${guild.bg} border ${guild.bg.replace('bg', 'border')}`}>
                           {guild.spec}
                         </span>
                       </td>

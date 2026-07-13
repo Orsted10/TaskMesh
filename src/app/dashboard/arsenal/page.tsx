@@ -41,14 +41,14 @@ export default function ArsenalPage() {
                 { name: 'Respec Token', icon: Hexagon, color: 'text-purple-500', count: 2, desc: 'Reset one skill branch' },
               ].map((item, i) => (
                 <div key={i} className="bg-black border border-zinc-800 rounded-xl p-4 flex flex-col items-center justify-center text-center hover:border-zinc-600 transition-all group/item cursor-pointer relative overflow-hidden">
-                  <div className={\`absolute inset-0 bg-gradient-to-t from-\${item.color.split('-')[1]}-500/10 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity\`} />
+                  <div className={`absolute inset-0 bg-gradient-to-t from-${item.color.split('-')[1]}-500/10 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity`} />
                   <div className="relative mb-3">
-                    <item.icon className={\`w-10 h-10 \${item.count > 0 ? item.color : 'text-zinc-700'}\`} />
+                    <item.icon className={`w-10 h-10 ${item.count > 0 ? item.color : 'text-zinc-700'}`} />
                     <span className="absolute -bottom-2 -right-2 bg-zinc-900 border border-zinc-700 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">
                       {item.count}
                     </span>
                   </div>
-                  <h3 className={\`font-teko text-xl uppercase leading-none mb-1 \${item.count > 0 ? 'text-white' : 'text-zinc-600'}\`}>{item.name}</h3>
+                  <h3 className={`font-teko text-xl uppercase leading-none mb-1 ${item.count > 0 ? 'text-white' : 'text-zinc-600'}`}>{item.name}</h3>
                   <p className="text-[9px] text-zinc-500 uppercase tracking-widest leading-tight">{item.desc}</p>
                   {item.count === 0 && (
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-[1px]">
@@ -74,7 +74,7 @@ export default function ArsenalPage() {
                 { name: 'Inferno Core', active: false, rarity: 'Legendary', color: 'from-orange-600 to-red-600' },
                 { name: 'Glacial Void', active: false, rarity: 'Rare', color: 'from-cyan-600 to-blue-600' },
               ].map((aura, i) => (
-                <div key={i} className={\`p-4 rounded-xl border \${aura.active ? 'border-purple-500 bg-purple-500/10' : 'border-zinc-800 bg-black'} flex flex-col items-center justify-center cursor-pointer hover:border-zinc-600 transition-all relative overflow-hidden\`}>
+                <div key={i} className={`p-4 rounded-xl border ${aura.active ? 'border-purple-500 bg-purple-500/10' : 'border-zinc-800 bg-black'} flex flex-col items-center justify-center cursor-pointer hover:border-zinc-600 transition-all relative overflow-hidden`}>
                   {aura.active && (
                     <div className="absolute top-2 left-2 flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
@@ -84,8 +84,8 @@ export default function ArsenalPage() {
                   <div className="absolute top-2 right-2 text-[9px] text-zinc-500 uppercase tracking-widest">{aura.rarity}</div>
                   
                   <div className="w-16 h-16 rounded-full relative mb-4 mt-4">
-                    <div className={\`absolute inset-0 bg-gradient-to-br \${aura.color} opacity-20 blur-md rounded-full\`} />
-                    <div className={\`absolute inset-2 bg-gradient-to-br \${aura.color} rounded-full border border-white/20 shadow-inner\`} />
+                    <div className={`absolute inset-0 bg-gradient-to-br ${aura.color} opacity-20 blur-md rounded-full`} />
+                    <div className={`absolute inset-2 bg-gradient-to-br ${aura.color} rounded-full border border-white/20 shadow-inner`} />
                   </div>
                   <h4 className="font-teko text-2xl text-white uppercase">{aura.name}</h4>
                 </div>
