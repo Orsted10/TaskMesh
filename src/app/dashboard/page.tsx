@@ -217,7 +217,7 @@ export default function Dashboard() {
                   <h1 className="text-4xl md:text-5xl font-teko text-white uppercase tracking-wider mb-1 flex items-center gap-3">
                     {rpgProfile?.username || 'OPERATIVE_01'}
                     <span className="px-2 py-0.5 bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 text-[10px] tracking-widest font-mono rounded">
-                      TIER {rpgProfile?.mastery_tier || 'NOVICE'}
+                      TIER {rpgProfile?.title?.toUpperCase() || 'NOVICE'}
                     </span>
                   </h1>
                   <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest flex items-center gap-2">
@@ -260,12 +260,12 @@ export default function Dashboard() {
           </h3>
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: 'STR', val: rpgProfile?.attributes?.strength || 10, color: 'text-red-400', bg: 'bg-red-400/10' },
-              { label: 'INT', val: rpgProfile?.attributes?.intelligence || 10, color: 'text-blue-400', bg: 'bg-blue-400/10' },
-              { label: 'CHR', val: rpgProfile?.attributes?.charisma || 10, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
-              { label: 'WIL', val: rpgProfile?.attributes?.willpower || 10, color: 'text-purple-400', bg: 'bg-purple-400/10' },
-              { label: 'CRA', val: rpgProfile?.attributes?.craftsmanship || 10, color: 'text-orange-400', bg: 'bg-orange-400/10' },
-              { label: 'AGI', val: rpgProfile?.attributes?.agility || 10, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
+              { label: 'STR', val: rpgProfile?.skills?.strength || 10, color: 'text-red-400', bg: 'bg-red-400/10' },
+              { label: 'INT', val: rpgProfile?.skills?.intelligence || 10, color: 'text-blue-400', bg: 'bg-blue-400/10' },
+              { label: 'CHR', val: rpgProfile?.skills?.charisma || 10, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
+              { label: 'WIL', val: rpgProfile?.skills?.willpower || 10, color: 'text-purple-400', bg: 'bg-purple-400/10' },
+              { label: 'CRA', val: rpgProfile?.skills?.craftsmanship || 10, color: 'text-orange-400', bg: 'bg-orange-400/10' },
+              { label: 'CRE', val: rpgProfile?.skills?.creativity || 10, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
             ].map((stat, i) => (
               <div key={i} className="flex flex-col items-center justify-center p-3 rounded-lg border border-zinc-800/50 hover:border-zinc-700 hover:bg-zinc-900/50 transition-colors">
                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{stat.label}</span>
