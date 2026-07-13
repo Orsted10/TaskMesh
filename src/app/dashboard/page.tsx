@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Crosshair, Activity, Target, Zap, ShieldAlert, Loader2, Play
+  Crosshair, Activity, Target, Zap, ShieldAlert, Loader2, Play, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
@@ -51,6 +51,22 @@ export default function Dashboard() {
       fetchActiveMissions();
     }
   }, [user]);
+
+  const handleDeleteMission = async (questId: string) => {
+    if (!confirm("Are you sure you want to permanently terminate this mission?")) return;
+    try {
+      const res = await fetch(`/api/mission/${questId}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) {
+        throw new Error('Failed to delete mission');
+      }
+      toast.success("Mission Terminated", { description: "The operation has been permanently scrubbed from the active matrix." });
+      fetchActiveMissions();
+    } catch (err: any) {
+      toast.error('Termination Failed', { description: err.message });
+    }
+  };
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -445,17 +461,30 @@ export default function Dashboard() {
                 activeMissions.map((mission) => (
                   <div 
                     key={mission.id} 
-                    onClick={() => router.push(`/mission/${mission.quests?.id}`)}
                     className="bg-gray-50 dark:bg-zinc-950/80 border border-gray-200 dark:border-zinc-800 p-4 rounded-xl hover:border-[#ff4655]/50 transition-colors group cursor-pointer relative overflow-hidden"
                   >
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#ff4655] opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(255,70,85,0.8)]" />
+                    
                     <div className="flex justify-between items-start mb-2 pl-2">
                       <span className="text-[10px] font-bold text-[#ff4655] uppercase tracking-wider bg-[#ff4655]/10 px-2 py-0.5 rounded border border-[#ff4655]/20">
                         LVL {mission.quests?.difficulty || 1}
                       </span>
-                      <span className="text-[10px] text-zinc-500 uppercase tracking-widest">{mission.quests?.category || 'General'}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-zinc-500 uppercase tracking-widest">{mission.quests?.category || 'General'}</span>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDeleteMission(mission.quests?.id); }}
+                          className="text-zinc-500 hover:text-red-500 transition-colors bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/30"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    <h4 className="font-teko text-xl text-zinc-800 dark:text-zinc-200 uppercase leading-none truncate group-hover:text-[#ff4655] dark:group-hover:text-white transition-colors pl-2">{mission.quests?.title || 'Unknown Protocol'}</h4>
+                    <h4 
+                      onClick={() => router.push(`/mission/${mission.quests?.id}`)} 
+                      className="font-teko text-xl text-zinc-800 dark:text-zinc-200 uppercase leading-none truncate group-hover:text-[#ff4655] dark:group-hover:text-white transition-colors pl-2"
+                    >
+                      {mission.quests?.title || 'Unknown Protocol'}
+                    </h4>
                   </div>
                 ))
               )}
