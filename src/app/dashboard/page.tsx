@@ -177,7 +177,7 @@ export default function Dashboard() {
     : null;
 
   // Calculate Progress
-  const currentXP = rpgProfile?.total_xp || 0;
+  const currentXP = rpgProfile?.total_exp || 0;
   const xpForNextLevel = ((rpgProfile?.level || 1) * 1000);
   const progressPercent = Math.min((currentXP / xpForNextLevel) * 100, 100);
 
