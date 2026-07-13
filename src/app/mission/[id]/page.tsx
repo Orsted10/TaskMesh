@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { getTierAesthetic } from '@/lib/rpg-data';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const SYSTEM_LOGS = [
   "INITIALIZING NEURAL LINK...",
@@ -650,8 +652,10 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                                     <Loader2 className="w-4 h-4 animate-spin" /> Uplinking to Teacher AI...
                                   </div>
                                 ) : (
-                                  <div className="text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap font-medium text-sm leading-relaxed">
-                                    {teachData[step.id]?.data}
+                                  <div className="prose prose-sm dark:prose-invert max-w-none prose-indigo prose-headings:font-teko prose-headings:uppercase prose-headings:tracking-wider prose-pre:bg-indigo-950/30 prose-pre:border prose-pre:border-indigo-900/50 prose-a:text-indigo-500 hover:prose-a:text-indigo-400 text-zinc-800 dark:text-zinc-200">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                      {teachData[step.id]?.data || ''}
+                                    </ReactMarkdown>
                                   </div>
                                 )}
                               </div>
@@ -665,7 +669,7 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                                   value={notesData[step.id] || ''}
                                   onChange={e => setNotesData(prev => ({ ...prev, [step.id]: e.target.value }))}
                                   placeholder="Record your mission logs here... (e.g. Snippets, reminders, pain points)"
-                                  className="w-full h-32 bg-transparent border-none focus:ring-0 text-sm text-zinc-800 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-600 resize-none font-mono"
+                                  className="w-full h-32 bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 resize-none font-mono"
                                 />
                                 <div className="flex justify-end mt-2">
                                   <Button 
