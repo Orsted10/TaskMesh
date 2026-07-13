@@ -643,71 +643,77 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                         </div>
 
                         {/* ACTION CONTENT PANELS */}
-                        <AnimatePresence>
-                          {activeAction[step.id] === 'teach' && (
-                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                              <div className="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-6 mt-2 relative">
-                                {teachData[step.id]?.loading ? (
-                                  <div className="flex items-center gap-3 text-indigo-600 dark:text-indigo-400 font-mono text-sm uppercase tracking-widest animate-pulse">
-                                    <Loader2 className="w-4 h-4 animate-spin" /> Uplinking to Teacher AI...
-                                  </div>
-                                ) : (
-                                  <div className="prose prose-sm dark:prose-invert max-w-none prose-indigo prose-headings:font-teko prose-headings:uppercase prose-headings:tracking-wider prose-pre:bg-indigo-950/30 prose-pre:border prose-pre:border-indigo-900/50 prose-a:text-indigo-500 hover:prose-a:text-indigo-400 text-zinc-800 dark:text-zinc-200">
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                      {teachData[step.id]?.data || ''}
-                                    </ReactMarkdown>
-                                  </div>
-                                )}
-                              </div>
-                            </motion.div>
-                          )}
-
-                          {activeAction[step.id] === 'notes' && (
-                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                              <div className="bg-amber-50 dark:bg-amber-950/10 border border-amber-100 dark:border-amber-900/30 rounded-xl p-4 mt-2">
-                                <textarea 
-                                  value={notesData[step.id] || ''}
-                                  onChange={e => setNotesData(prev => ({ ...prev, [step.id]: e.target.value }))}
-                                  placeholder="Record your mission logs here... (e.g. Snippets, reminders, pain points)"
-                                  className="w-full h-32 bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 resize-none font-mono"
-                                />
-                                <div className="flex justify-end mt-2">
-                                  <Button 
-                                    size="sm" 
-                                    className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold tracking-widest uppercase"
-                                    onClick={() => handleSaveNote(step.id, notesData[step.id] || '')}
-                                    disabled={savingNote[step.id]}
-                                  >
-                                    {savingNote[step.id] ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : null}
-                                    Save Logs
-                                  </Button>
+                        <div onClick={e => e.stopPropagation()}>
+                          <AnimatePresence>
+                            {activeAction[step.id] === 'teach' && (
+                              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                                <div className="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-6 mt-2 relative">
+                                  {teachData[step.id]?.loading ? (
+                                    <div className="flex items-center gap-3 text-indigo-600 dark:text-indigo-400 font-mono text-sm uppercase tracking-widest animate-pulse">
+                                      <Loader2 className="w-4 h-4 animate-spin" /> Uplinking to Teacher AI...
+                                    </div>
+                                  ) : (
+                                    <div className="prose prose-sm dark:prose-invert max-w-none prose-indigo prose-headings:font-teko prose-headings:uppercase prose-headings:tracking-wider prose-pre:bg-indigo-950/30 prose-pre:border prose-pre:border-indigo-900/50 prose-a:text-indigo-500 hover:prose-a:text-indigo-400 text-zinc-800 dark:text-zinc-200 overflow-x-auto break-words">
+                                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {teachData[step.id]?.data || ''}
+                                      </ReactMarkdown>
+                                    </div>
+                                  )}
                                 </div>
-                              </div>
-                            </motion.div>
-                          )}
+                              </motion.div>
+                            )}
 
-                          {activeAction[step.id] === 'resources' && (
-                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                              <div className="bg-cyan-50 dark:bg-cyan-950/10 border border-cyan-100 dark:border-cyan-900/30 rounded-xl p-6 mt-2">
-                                <h4 className="text-xs font-bold text-cyan-700 dark:text-cyan-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Info className="w-4 h-4"/> External Intel</h4>
-                                {step.resources && step.resources.length > 0 ? (
-                                  <ul className="space-y-3">
-                                    {step.resources.map((res: any, i: number) => (
-                                      <li key={i}>
-                                        <a href={res.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-cyan-600 dark:hover:text-cyan-400 flex items-center gap-2 transition-colors">
-                                          <ExternalLink className="w-3 h-3" />
-                                          {res.title}
+                            {activeAction[step.id] === 'notes' && (
+                              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                                <div className="bg-amber-50 dark:bg-amber-950/10 border border-amber-100 dark:border-amber-900/30 rounded-xl p-4 mt-2">
+                                  <textarea 
+                                    value={notesData[step.id] || ''}
+                                    onChange={e => setNotesData(prev => ({ ...prev, [step.id]: e.target.value }))}
+                                    placeholder="Record your mission logs here... (e.g. Snippets, reminders, pain points)"
+                                    className="w-full h-32 bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 resize-none font-mono"
+                                  />
+                                  <div className="flex justify-end mt-2">
+                                    <Button 
+                                      size="sm" 
+                                      className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold tracking-widest uppercase"
+                                      onClick={() => handleSaveNote(step.id, notesData[step.id] || '')}
+                                      disabled={savingNote[step.id]}
+                                    >
+                                      {savingNote[step.id] ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Logs'}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+
+                            {activeAction[step.id] === 'resources' && (
+                              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                                <div className="bg-cyan-50 dark:bg-cyan-950/10 border border-cyan-100 dark:border-cyan-900/30 rounded-xl p-4 mt-2">
+                                  {step.resources && step.resources.length > 0 ? (
+                                    <div className="space-y-3">
+                                      {step.resources.map((res: any, rIdx: number) => (
+                                        <a key={rIdx} href={res.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg bg-white/50 dark:bg-zinc-900/50 hover:bg-white dark:hover:bg-zinc-800 border border-transparent hover:border-cyan-200 dark:hover:border-cyan-800 transition-all group">
+                                          <div className="p-2 bg-cyan-100 dark:bg-cyan-950 rounded-md text-cyan-600 dark:text-cyan-400 group-hover:scale-110 transition-transform">
+                                            <ExternalLink className="w-4 h-4" />
+                                          </div>
+                                          <div>
+                                            <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">{res.title}</p>
+                                            <p className="text-xs text-zinc-500 font-mono truncate max-w-[200px] md:max-w-[400px]">{res.url}</p>
+                                          </div>
                                         </a>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                ) : (
-                                  <p className="text-sm text-zinc-500 font-mono italic">No external intel found for this step.</p>
-                                )}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="flex flex-col items-center justify-center py-8 text-cyan-700/50 dark:text-cyan-500/50">
+                                      <Info className="w-8 h-8 mb-2 opacity-50" />
+                                      <p className="text-sm font-mono italic">No external intel found for this step.</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
