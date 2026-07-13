@@ -23,6 +23,7 @@ export type RpgProfile = {
     craftsmanship: number;
     willpower: number;
   };
+  specific_skills?: Record<string, number>;
 };
 
 type AuthContextType = {
