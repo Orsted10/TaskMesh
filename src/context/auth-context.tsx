@@ -29,6 +29,12 @@ export type RpgProfile = {
     theme_color?: string;
     sound_fx?: boolean;
     linked_hardware?: Record<string, boolean>;
+    ghost_protocol?: boolean;
+    notifications?: {
+      email?: boolean;
+      push?: boolean;
+      sms?: boolean;
+    };
   };
 };
 
