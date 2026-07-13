@@ -235,7 +235,7 @@ export default function Dashboard() {
                 <div className="h-4 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800 relative">
                   <motion.div 
                     initial={{ width: 0 }}
-                    animate={{ width: \`\${progressPercent}%\` }}
+                    animate={{ width: `${progressPercent}%` }}
                     transition={{ duration: 1.5, ease: "easeOut" }}
                     className="h-full bg-gradient-to-r from-[#ff4655]/50 to-[#ff4655] relative"
                   >
@@ -269,7 +269,7 @@ export default function Dashboard() {
             ].map((stat, i) => (
               <div key={i} className="flex flex-col items-center justify-center p-3 rounded-lg border border-zinc-800/50 hover:border-zinc-700 hover:bg-zinc-900/50 transition-colors">
                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{stat.label}</span>
-                <span className={\`text-xl font-teko \${stat.color}\`}>{stat.val}</span>
+                <span className={`text-xl font-teko ${stat.color}`}>{stat.val}</span>
               </div>
             ))}
           </div>
@@ -375,12 +375,12 @@ export default function Dashboard() {
                     {generatedQuest.quests.map((quest: any, qIdx: number) => {
                       const aesthetic = getTierAesthetic(quest.tier);
                       return (
-                        <div key={qIdx} className={\`bg-zinc-950 border border-zinc-800 rounded-xl p-6 relative overflow-hidden group hover:border-\${aesthetic.accent.split('-')[1]}-500/50 transition-all duration-300 shadow-lg\`}>
-                          <div className={\`absolute left-0 top-0 bottom-0 w-1 \${aesthetic.bg} opacity-50 group-hover:opacity-100 transition-opacity\`} />
+                        <div key={qIdx} className={`bg-zinc-950 border border-zinc-800 rounded-xl p-6 relative overflow-hidden group hover:border-${aesthetic.accent.split('-')[1]}-500/50 transition-all duration-300 shadow-lg`}>
+                          <div className={`absolute left-0 top-0 bottom-0 w-1 ${aesthetic.bg} opacity-50 group-hover:opacity-100 transition-opacity`} />
                           
                           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pl-4 gap-4 relative z-10">
                             <div className="flex gap-3 items-center flex-wrap">
-                              <span className={\`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-sm border \${aesthetic.bg} \${aesthetic.textDark} \${aesthetic.border} shadow-inner\`}>
+                              <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-sm border ${aesthetic.bg} ${aesthetic.textDark} ${aesthetic.border} shadow-inner`}>
                                 {quest.tier || 'STANDARD'}
                               </span>
                               <span className="text-[10px] font-bold text-[#ff4655] uppercase tracking-widest bg-[#ff4655]/10 px-3 py-1.5 rounded-sm border border-[#ff4655]/20 shadow-inner">
@@ -398,7 +398,7 @@ export default function Dashboard() {
                             </div>
                           </div>
                           
-                          <h4 className={\`font-teko text-4xl text-white uppercase leading-none pl-4 mb-3 transition-colors duration-300 group-hover:\${aesthetic.text}\`}>{quest.title}</h4>
+                          <h4 className={`font-teko text-4xl text-white uppercase leading-none pl-4 mb-3 transition-colors duration-300 group-hover:${aesthetic.text}`}>{quest.title}</h4>
                           <p className="text-zinc-400 text-sm pl-4 mb-6 max-w-3xl font-mono">{quest.description}</p>
                           
                           <div className="pl-4 space-y-3 relative z-10 bg-zinc-900/50 p-4 rounded-lg border border-zinc-800/80">
@@ -407,7 +407,7 @@ export default function Dashboard() {
                             </div>
                             {quest.steps?.slice(0, 3).map((step: any, i: number) => (
                               <div key={i} className="flex gap-4 text-sm text-zinc-300 items-start p-2 hover:bg-zinc-800/50 rounded transition-colors">
-                                <span className={\`font-mono text-[10px] mt-1 \${aesthetic.text} font-bold\`}>0{i+1}</span>
+                                <span className={`font-mono text-[10px] mt-1 ${aesthetic.text} font-bold`}>0{i+1}</span>
                                 <span className="leading-relaxed font-mono text-xs">{step.title}</span>
                               </div>
                             ))}
