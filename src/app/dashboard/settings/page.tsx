@@ -31,7 +31,11 @@ export default function SettingsPage() {
       setSoundFx(prefs.sound_fx !== false);
       setGhostProtocol(prefs.ghost_protocol === true);
       if (prefs.notifications) {
-        setNotifications(prefs.notifications);
+        setNotifications({
+          email: prefs.notifications.email ?? true,
+          push: prefs.notifications.push ?? true,
+          sms: prefs.notifications.sms ?? false,
+        });
       }
     }
   }, [rpgProfile]);
