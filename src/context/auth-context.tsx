@@ -24,6 +24,12 @@ export type RpgProfile = {
     willpower: number;
   };
   specific_skills?: Record<string, number>;
+  preferences?: {
+    ai_persona?: string;
+    theme_color?: string;
+    sound_fx?: boolean;
+    linked_hardware?: Record<string, boolean>;
+  };
 };
 
 type AuthContextType = {
@@ -61,6 +67,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Fallback for skills if they don't match the new schema perfectly yet
         const defaultSkills = { strength: 0, intelligence: 0, charisma: 0, creativity: 0, craftsmanship: 0, willpower: 0 };
         data.skills = { ...defaultSkills, ...(data.skills || {}) };
+        
+        // Fallback for preferences
+        const defaultPrefs = { ai_persona: 'drill_sergeant', theme_color: 'red', sound_fx: true, linked_hardware: {} };
+        data.preferences = { ...defaultPrefs, ...(data.preferences || {}) };
+
         setRpgProfile(data as RpgProfile);
       }
     } catch (err) {

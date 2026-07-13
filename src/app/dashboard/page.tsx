@@ -215,7 +215,7 @@ export default function Dashboard() {
 
                 <div>
                   <h1 className="text-4xl md:text-5xl font-teko text-white uppercase tracking-wider mb-1 flex items-center gap-3">
-                    {rpgProfile?.username || 'OPERATIVE_01'}
+                    {rpgProfile?.full_name || rpgProfile?.username || 'OPERATIVE_01'}
                     <span className="px-2 py-0.5 bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 text-[10px] tracking-widest font-mono rounded">
                       TIER {rpgProfile?.title?.toUpperCase() || 'NOVICE'}
                     </span>
@@ -274,6 +274,80 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
+      </div>
+
+      </div>
+
+      {/* DASHBOARD EXPANSION ROW */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
+        
+        {/* Daily Directives */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          className="bg-zinc-950/90 border border-zinc-800 rounded-xl p-6 relative overflow-hidden group shadow-[0_0_30px_rgba(0,0,0,0.5)]"
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full" />
+          <h3 className="font-teko text-2xl text-white uppercase tracking-widest mb-4 flex items-center justify-between border-b border-zinc-800 pb-2">
+            <span className="flex items-center gap-2"><Target className="w-4 h-4 text-emerald-400" /> Daily Directives</span>
+            <span className="text-[10px] text-emerald-500 font-mono tracking-widest border border-emerald-500/30 px-2 rounded bg-emerald-500/10">0/3 COMPLETE</span>
+          </h3>
+          <div className="space-y-3">
+            {[
+              { text: "Complete 1 Novice Operation", xp: 50 },
+              { text: "Synthesize a new objective", xp: 25 },
+              { text: "Upload biometric proof", xp: 100 }
+            ].map((d, i) => (
+              <div key={i} className="flex items-center gap-3 bg-black/50 border border-zinc-800/80 p-3 rounded-lg hover:border-emerald-500/30 transition-colors cursor-pointer group/item">
+                <div className="w-4 h-4 rounded border border-zinc-600 flex-shrink-0 group-hover/item:border-emerald-500 transition-colors" />
+                <span className="text-sm font-mono text-zinc-400 flex-1 truncate">{d.text}</span>
+                <span className="text-[10px] font-bold text-yellow-500 font-mono">+{d.xp} XP</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Guild Events */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          className="bg-zinc-950/90 border border-zinc-800 rounded-xl p-6 relative overflow-hidden group shadow-[0_0_30px_rgba(0,0,0,0.5)]"
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 blur-3xl rounded-full" />
+          <h3 className="font-teko text-2xl text-white uppercase tracking-widest mb-4 flex items-center justify-between border-b border-zinc-800 pb-2">
+            <span className="flex items-center gap-2"><ShieldAlert className="w-4 h-4 text-purple-400" /> Guild Events</span>
+            <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+          </h3>
+          <div className="flex flex-col items-center justify-center h-full min-h-[150px] opacity-60 bg-black/30 rounded-lg border border-dashed border-zinc-800">
+            <ShieldAlert className="w-8 h-8 text-zinc-600 mb-2" />
+            <p className="text-[10px] font-mono text-zinc-500 tracking-[0.2em] uppercase">No Guild Associated</p>
+          </div>
+        </motion.div>
+
+        {/* Global Bounties */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+          className="bg-zinc-950/90 border border-zinc-800 rounded-xl p-6 relative overflow-hidden group shadow-[0_0_30px_rgba(0,0,0,0.5)]"
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 blur-3xl rounded-full" />
+          <h3 className="font-teko text-2xl text-white uppercase tracking-widest mb-4 flex items-center gap-2 border-b border-zinc-800 pb-2">
+            <Flame className="w-4 h-4 text-orange-400" /> Global Bounties
+          </h3>
+          <div className="space-y-3">
+            {[
+              { text: "100km Run (Global)", pool: "50,000" },
+              { text: "Open Source Contribs", pool: "25,000" }
+            ].map((d, i) => (
+              <div key={i} className="flex flex-col justify-center bg-black/50 border border-zinc-800/80 p-3 rounded-lg hover:border-orange-500/30 transition-colors cursor-pointer relative overflow-hidden">
+                <div className="absolute top-0 left-0 bottom-0 w-1 bg-orange-500/50" />
+                <div className="flex justify-between items-center pl-2">
+                  <span className="text-sm font-mono text-zinc-300 truncate">{d.text}</span>
+                  <span className="text-[10px] font-bold text-yellow-500 font-mono flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full" /> {d.pool}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 relative z-10">
