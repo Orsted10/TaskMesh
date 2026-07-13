@@ -408,21 +408,25 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
           
           <div className="flex items-center justify-between mb-8 border-b border-gray-200 dark:border-zinc-800 pb-4">
             <h2 className="font-teko text-4xl md:text-5xl uppercase tracking-widest text-zinc-900 dark:text-white flex items-center gap-4">
-              <Radio className="w-8 h-8 text-[#ff4655] animate-pulse" />
+              <Radio className={`w-8 h-8 ${aesthetic.text} animate-pulse`} />
               Objectives
             </h2>
-            <div className={`font-mono text-xs font-bold tracking-[0.2em] px-4 py-2 rounded-md border ${completedSteps.size === steps.length ? `bg-[#ff4655] text-white border-[#ff4655]` : 'bg-gray-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-gray-200 dark:border-zinc-800'} shadow-sm transition-colors`}>
+            <div className={`font-mono text-xs font-bold tracking-[0.2em] px-4 py-2 rounded-md border ${completedSteps.size === steps.length ? `${aesthetic.accent} text-white ${aesthetic.primaryBorder}` : 'bg-gray-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-gray-200 dark:border-zinc-800'} shadow-sm transition-colors`}>
               {completedSteps.size} / {steps.length} SECURED
             </div>
           </div>
 
           <div className="relative space-y-8 mb-16">
             {/* Dynamic Connection Line */}
-            <div className="absolute left-[2.25rem] top-8 bottom-8 w-[2px] bg-gray-200 dark:bg-zinc-800 -z-10" />
-            <div 
-              className={`absolute left-[2.25rem] top-8 w-[2px] ${aesthetic.accent} ${aesthetic.glow} -z-10 transition-all duration-1000`} 
-              style={{ height: steps.length > 0 ? `${(completedSteps.size / steps.length) * 100}%` : '0%' }}
-            />
+            {steps.length > 1 && (
+              <>
+                <div className="absolute left-[3.75rem] top-14 bottom-14 w-[2px] bg-gray-200 dark:bg-zinc-800 -z-10" />
+                <div 
+                  className={`absolute left-[3.75rem] top-14 w-[2px] ${aesthetic.accent} ${aesthetic.glow} -z-10 transition-all duration-1000`} 
+                  style={{ height: `${(completedSteps.size / (steps.length - 1)) * 100}%`, maxHeight: 'calc(100% - 3.5rem)' }}
+                />
+              </>
+            )}
 
             <AnimatePresence>
               {steps.map((step, idx) => {
@@ -434,14 +438,14 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                     transition={{ delay: idx * 0.1, type: "spring", stiffness: 100 }}
                     key={step.id}
                     onClick={() => toggleStep(step.id)}
-                    className={`relative p-8 rounded-2xl flex gap-6 cursor-pointer transition-all duration-300 group hover:-translate-y-1 shadow-lg ${
+                    className={`relative p-8 rounded-2xl flex gap-6 cursor-pointer transition-all duration-300 group hover:-translate-y-1 shadow-lg border ${
                       isDone 
-                        ? `${aesthetic.bg} ${aesthetic.primaryBorder} border shadow-xl` 
-                        : 'bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 hover:border-gray-400 dark:hover:border-zinc-600'
+                        ? `bg-zinc-50 dark:bg-zinc-950/80 ${aesthetic.primaryBorder} shadow-xl backdrop-blur-md` 
+                        : 'bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 hover:border-gray-400 dark:hover:border-zinc-600'
                     }`}
                   >
                     {isDone && (
-                      <div className={`absolute inset-0 ${aesthetic.accent} opacity-5 blur-xl pointer-events-none rounded-2xl`} />
+                      <div className={`absolute inset-0 ${aesthetic.accent} opacity-[0.03] dark:opacity-5 blur-xl pointer-events-none rounded-2xl`} />
                     )}
                     
                     <div className="flex-shrink-0 relative z-10 bg-white dark:bg-zinc-950 rounded-full p-1 self-start shadow-sm border border-gray-100 dark:border-zinc-800">
@@ -461,10 +465,10 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                     </div>
                     
                     <div className="relative z-10 flex-grow pt-1">
-                      <h3 className={`text-4xl font-teko uppercase mb-2 tracking-wide transition-colors ${isDone ? 'text-zinc-900 dark:text-white' : 'text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white'}`}>
+                      <h3 className={`text-4xl font-teko uppercase mb-2 tracking-wide transition-colors ${isDone ? 'text-zinc-900 dark:text-white' : 'text-zinc-800 dark:text-zinc-100 group-hover:text-black dark:group-hover:text-white'}`}>
                         {step.title}
                       </h3>
-                      <p className={`text-lg mb-6 leading-relaxed transition-colors ${isDone ? 'text-zinc-800 dark:text-zinc-200 font-medium' : 'text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-800 dark:group-hover:text-zinc-300'}`}>
+                      <p className={`text-lg mb-6 leading-relaxed transition-colors ${isDone ? 'text-zinc-800 dark:text-zinc-200 font-medium' : 'text-zinc-600 dark:text-zinc-300 group-hover:text-zinc-800 dark:group-hover:text-zinc-200'}`}>
                         {step.instruction}
                       </p>
                       
@@ -496,10 +500,10 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
             <Button
               onClick={handleCompleteMission}
               disabled={completing || completedSteps.size < steps.length}
-              className={`w-full h-32 rounded-3xl font-teko text-5xl md:text-6xl tracking-[0.2em] uppercase transition-all duration-500 relative overflow-hidden z-10 group ${
+              className={`w-full h-32 rounded-3xl font-teko text-5xl md:text-6xl tracking-[0.2em] uppercase transition-all duration-500 relative overflow-hidden z-10 group border-2 ${
                 completedSteps.size === steps.length
-                  ? `bg-[#ff4655] hover:bg-[#e03e4b] text-white shadow-[0_0_40px_rgba(255,70,85,0.4)] hover:shadow-[0_0_60px_rgba(255,70,85,0.6)] hover:-translate-y-2 border-0`
-                  : 'bg-white dark:bg-zinc-900 text-gray-400 dark:text-zinc-600 cursor-not-allowed border-2 border-gray-200 dark:border-zinc-800 shadow-sm'
+                  ? `${aesthetic.accent} hover:opacity-90 text-white ${aesthetic.glow} hover:-translate-y-2 border-transparent`
+                  : 'bg-white dark:bg-zinc-900 text-gray-400 dark:text-zinc-600 cursor-not-allowed border-gray-200 dark:border-zinc-800 shadow-sm'
               }`}
             >
               {/* Button Glitch / Scanline overlay */}
