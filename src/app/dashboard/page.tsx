@@ -276,8 +276,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      </div>
-
       {/* DASHBOARD EXPANSION ROW */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
         
