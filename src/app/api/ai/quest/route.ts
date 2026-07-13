@@ -3,12 +3,13 @@ import Groq from 'groq-sdk';
 import * as cheerio from 'cheerio';
 
 const SYSTEM_PROMPT = `
-You are the ACTIO God-Mode AI Engine, a tactical, gamified quest generator.
+You are the ACTIO God-Mode AI Engine, a tactical, gamified quest generator and witty teacher.
 Your job is to take raw, boring text (or scraped webpage content) and turn it into a highly structured, actionable "Campaign" containing multiple missions.
 
-Based on the scope and difficulty of the task, you MUST generate an array of missions (a Campaign). 
-If the task is MASSIVE (e.g., "Learn Python", "Build a Startup"), generate a multi-tier campaign (e.g., 1 Daily, 1 Medium, 1 Hard, 1 Boss).
-If the task is SMALL (e.g., "Cook Fried Rice"), generate fewer, appropriate missions (e.g., 1 Easy, 1 Medium).
+You will receive the user's CURRENT SKILL PROFICIENCIES (each out of a maximum 10,000 points). 
+If the user asks for a task they are already a "Grand Master" in (e.g. 9000/10000 in C Programming asking for Hello World), you MUST be witty, sarcastic, and give them VERY LOW rewards (+1 EXP) because the task is beneath them. If the task is appropriately hard for their level, give massive rewards.
+If the task is MASSIVE (e.g., "Learn Python", "Build a Startup"), generate a multi-tier campaign.
+If the task is SMALL (e.g., "Cook Fried Rice"), generate fewer, appropriate missions.
 
 MISSION TIERS AVAILABLE (You must select EXACTLY one of these strings for the "tier" field based on the difficulty and scope of the mission):
 
@@ -100,24 +101,30 @@ You MUST respond in pure, raw JSON format matching this EXACT schema:
   "quests": [
     {
       "title": "string (Gamified mission title)",
-      "description": "string (Tactical briefing)",
+      "description": "string (Tactical briefing. If the user is over-leveled for this, make this description witty/sarcastic about their high skill level!)",
       "category": "string (one of the 6 core stats)",
       "difficulty": number (1 to 5),
       "tier": "string (One of the MISSION TIERS)",
       "mission_type": "string (e.g., 'Standard', 'Boss', 'Daily')",
       "rewards": {
-        "xp": number (100 to 5000 based on tier),
+        "xp": number (100 to 5000 based on tier, OR drastically reduced if user is over-leveled),
         "gold": number (10 to 1000),
         "shine": number (1 to 100, rare premium currency),
         "skillpoints": number (1 to 50, to level up core stats),
-        "specific_skills": [{"name": "string (e.g. 'Python', 'Cooking')", "value": number}]
+        "specific_skills": [
+          {"name": "string (The specialized skill, e.g. 'C Programming')", "value": number (1 to 100)},
+          {"name": "string (The Mainline progression skill, e.g. 'Programming')", "value": number (1 to 100)}
+        ]
       },
       "steps": [
         {
           "order_index": number,
           "title": "string (Short action name)",
           "instruction": "string",
-          "ai_validation_prompt": "string (What the Vision AI should look for)"
+          "ai_validation_prompt": "string (What the Vision AI should look for)",
+          "resources": [
+            {"title": "string (Name of the external resource, e.g. 'GeeksForGeeks' or 'YouTube')", "url": "string (Relevant URL to learn how to do this specific step)"}
+          ]
         }
       ]
     }
@@ -133,7 +140,7 @@ export async function POST(req: Request) {
 
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
     const body = await req.json();
-    const { type, payload } = body;
+    const { type, payload, userSkills } = body;
 
     if (!payload) {
       return NextResponse.json({ error: 'Payload is required' }, { status: 400 });
@@ -171,7 +178,7 @@ export async function POST(req: Request) {
     const completion = await groq.chat.completions.create({
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: `Generate a campaign from the following input:\n\n${rawContent}` },
+        { role: 'user', content: `USER'S CURRENT SKILLS (Out of 10000 points max per skill): ${JSON.stringify(userSkills || {})}\n\nGenerate a campaign from the following input:\n\n${rawContent}` },
       ],
       model: 'llama-3.1-8b-instant',
       temperature: 0.3,

@@ -66,7 +66,11 @@ export default function Dashboard() {
       const res = await fetch('/api/ai/quest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, payload }),
+        body: JSON.stringify({ 
+          type, 
+          payload,
+          userSkills: rpgProfile?.specific_skills || {}
+        }),
       });
 
       const data = await res.json();
@@ -113,6 +117,7 @@ export default function Dashboard() {
             instruction: step.instruction,
             verification_type: 'image',
             ai_validation_prompt: step.ai_validation_prompt,
+            resources: step.resources || []
           }));
           const { error: stepsError } = await supabase.from('quest_steps').insert(stepsToInsert);
           if (stepsError) throw stepsError;

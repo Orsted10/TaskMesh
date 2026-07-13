@@ -4,7 +4,7 @@ import { useEffect, useState, use } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
-import { Loader2, ArrowLeft, ShieldAlert, CheckCircle, Crosshair, Zap, Activity, Clock, Terminal, AlertTriangle, Fingerprint, Database, Cpu, Wifi, Radio } from 'lucide-react';
+import { Loader2, ArrowLeft, ShieldAlert, CheckCircle, Crosshair, Zap, Activity, Clock, Terminal, AlertTriangle, Fingerprint, Database, Cpu, Wifi, Radio, BookOpen, PenLine, ExternalLink, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { getTierAesthetic } from '@/lib/rpg-data';
@@ -28,14 +28,22 @@ const SYSTEM_LOGS = [
 
 export default function MissionPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const { user, loading: authLoading } = useAuth();
+  const { user, rpgProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   
   const [mission, setMission] = useState<any>(null);
   const [steps, setSteps] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
+  
+  // Persistence & Action Bar States
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
+  const [progressId, setProgressId] = useState<string | null>(null);
+  const [activeAction, setActiveAction] = useState<Record<string, 'teach' | 'notes' | 'resources' | null>>({});
+  const [teachData, setTeachData] = useState<Record<string, { loading: boolean, data: string | null }>>({});
+  const [notesData, setNotesData] = useState<Record<string, string>>({});
+  const [savingNote, setSavingNote] = useState<Record<string, boolean>>({});
+
   const [timeSpent, setTimeSpent] = useState(0);
   const [currentLog, setCurrentLog] = useState(SYSTEM_LOGS[0]);
 
@@ -62,6 +70,36 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
         toast.error('Mission not found');
         router.push('/dashboard');
         return;
+      }
+
+      // Fetch progress and verifications to persist state
+      const { data: progressData } = await supabase
+        .from('user_quest_progress')
+        .select('id')
+        .eq('quest_id', resolvedParams.id)
+        .eq('user_id', user.id)
+        .eq('status', 'in_progress')
+        .single();
+
+      if (progressData) {
+        setProgressId(progressData.id);
+        const { data: verifications } = await supabase
+          .from('user_step_verifications')
+          .select('step_id, metadata, status')
+          .eq('progress_id', progressData.id);
+
+        if (verifications) {
+          const completed = new Set<string>();
+          const loadedNotes: Record<string, string> = {};
+          verifications.forEach(v => {
+            if (v.status === 'verified') completed.add(v.step_id);
+            if (v.metadata && (v.metadata as any).notes) {
+              loadedNotes[v.step_id] = (v.metadata as any).notes;
+            }
+          });
+          setCompletedSteps(completed);
+          setNotesData(loadedNotes);
+        }
       }
 
       const { data: stepsData } = await supabase
@@ -98,14 +136,64 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const toggleStep = (stepId: string) => {
+  const toggleStep = async (stepId: string) => {
+    if (!progressId) return;
+
     const newSet = new Set(completedSteps);
-    if (newSet.has(stepId)) {
+    const isCurrentlyDone = newSet.has(stepId);
+    
+    if (isCurrentlyDone) {
       newSet.delete(stepId);
     } else {
       newSet.add(stepId);
     }
-    setCompletedSteps(newSet);
+    setCompletedSteps(newSet); // Optimistic UI update
+
+    // Upsert into DB
+    const currentNotes = notesData[stepId] || '';
+    
+    await supabase.from('user_step_verifications').upsert({
+      progress_id: progressId,
+      step_id: stepId,
+      status: isCurrentlyDone ? 'pending' : 'verified',
+      metadata: { notes: currentNotes }
+    }, { onConflict: 'progress_id, step_id' });
+  };
+
+  const handleSaveNote = async (stepId: string, note: string) => {
+    if (!progressId) return;
+    setSavingNote(prev => ({ ...prev, [stepId]: true }));
+    const isDone = completedSteps.has(stepId);
+    await supabase.from('user_step_verifications').upsert({
+         progress_id: progressId,
+         step_id: stepId,
+         status: isDone ? 'verified' : 'pending',
+         metadata: { notes: note }
+    }, { onConflict: 'progress_id, step_id' });
+    toast.success('Notes Secured!');
+    setSavingNote(prev => ({ ...prev, [stepId]: false }));
+  };
+
+  const handleTeachMe = async (step: any) => {
+    if (teachData[step.id]?.loading) return;
+    
+    setTeachData(prev => ({ ...prev, [step.id]: { loading: true, data: null } }));
+    
+    try {
+       const res = await fetch('/api/ai/teach', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+           stepTitle: step.title,
+           stepInstruction: step.instruction,
+           userSkills: rpgProfile?.specific_skills || {}
+         })
+       });
+       const json = await res.json();
+       setTeachData(prev => ({ ...prev, [step.id]: { loading: false, data: json.response } }));
+    } catch (e) {
+       setTeachData(prev => ({ ...prev, [step.id]: { loading: false, data: 'Error establishing teacher link.' } }));
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -282,12 +370,13 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
         <div className="flex flex-col relative z-20 w-full min-w-0">
           
           <Button 
-            variant="ghost" 
+            variant="outline" 
             onClick={() => router.push('/dashboard')}
-            className="self-start mb-8 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-white/50 dark:hover:bg-zinc-800 uppercase tracking-[0.2em] font-bold text-[10px] group transition-all"
+            className="self-start mb-8 text-[#ff4655] hover:text-white border-[#ff4655] hover:bg-[#ff4655] uppercase tracking-[0.2em] font-bold text-xs group transition-all rounded-sm shadow-[0_0_15px_rgba(255,70,85,0.2)] hover:shadow-[0_0_25px_rgba(255,70,85,0.6)] relative overflow-hidden"
           >
-            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-            Abort Operation
+            <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_5px,rgba(255,70,85,0.1)_5px,rgba(255,70,85,0.1)_10px)] pointer-events-none" />
+            <AlertTriangle className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform relative z-10" />
+            <span className="relative z-10">EMERGENCY ABORT</span>
           </Button>
 
           {/* Mission Header */}
@@ -477,13 +566,113 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                         {step.instruction}
                       </p>
                       
-                      <div className={`inline-flex items-center gap-3 text-xs font-mono px-4 py-2.5 rounded-lg border shadow-sm ${
+                      <div className={`inline-flex items-center gap-3 text-xs font-mono px-4 py-2.5 rounded-lg border shadow-sm mb-6 ${
                         isDone 
                           ? `bg-white dark:bg-zinc-900 ${aesthetic.textDark} border-gray-200 dark:border-zinc-700` 
                           : 'bg-gray-50 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400 border-gray-200 dark:border-zinc-800'
                       } transition-colors`}>
                         <Fingerprint className={`w-4 h-4 ${isDone ? aesthetic.text : 'text-zinc-400'}`} /> 
                         <span><span className="font-bold opacity-50 mr-2">VERIFY:</span> {step.ai_validation_prompt}</span>
+                      </div>
+
+                      {/* ACTION BAR */}
+                      <div className="flex flex-col gap-4 mt-4 relative z-20" onClick={e => e.stopPropagation()}>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setActiveAction(prev => ({ ...prev, [step.id]: prev[step.id] === 'teach' ? null : 'teach' }));
+                              if (!teachData[step.id]?.data && activeAction[step.id] !== 'teach') {
+                                handleTeachMe(step);
+                              }
+                            }}
+                            className={`text-xs uppercase tracking-widest font-bold ${activeAction[step.id] === 'teach' ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500' : 'text-zinc-500 border-zinc-200 dark:border-zinc-800'}`}
+                          >
+                            <BookOpen className="w-3.5 h-3.5 mr-2" /> Teach Me
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setActiveAction(prev => ({ ...prev, [step.id]: prev[step.id] === 'notes' ? null : 'notes' }))}
+                            className={`text-xs uppercase tracking-widest font-bold ${activeAction[step.id] === 'notes' ? 'bg-amber-500/10 text-amber-500 border-amber-500' : 'text-zinc-500 border-zinc-200 dark:border-zinc-800'}`}
+                          >
+                            <PenLine className="w-3.5 h-3.5 mr-2" /> Mission Logs
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setActiveAction(prev => ({ ...prev, [step.id]: prev[step.id] === 'resources' ? null : 'resources' }))}
+                            className={`text-xs uppercase tracking-widest font-bold ${activeAction[step.id] === 'resources' ? 'bg-cyan-500/10 text-cyan-500 border-cyan-500' : 'text-zinc-500 border-zinc-200 dark:border-zinc-800'}`}
+                          >
+                            <ExternalLink className="w-3.5 h-3.5 mr-2" /> Resources
+                          </Button>
+                        </div>
+
+                        {/* ACTION CONTENT PANELS */}
+                        <AnimatePresence>
+                          {activeAction[step.id] === 'teach' && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-6 mt-2 relative">
+                                {teachData[step.id]?.loading ? (
+                                  <div className="flex items-center gap-3 text-indigo-600 dark:text-indigo-400 font-mono text-sm uppercase tracking-widest animate-pulse">
+                                    <Loader2 className="w-4 h-4 animate-spin" /> Uplinking to Teacher AI...
+                                  </div>
+                                ) : (
+                                  <div className="text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap font-medium text-sm leading-relaxed">
+                                    {teachData[step.id]?.data}
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+
+                          {activeAction[step.id] === 'notes' && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="bg-amber-50 dark:bg-amber-950/10 border border-amber-100 dark:border-amber-900/30 rounded-xl p-4 mt-2">
+                                <textarea 
+                                  value={notesData[step.id] || ''}
+                                  onChange={e => setNotesData(prev => ({ ...prev, [step.id]: e.target.value }))}
+                                  placeholder="Record your mission logs here... (e.g. Snippets, reminders, pain points)"
+                                  className="w-full h-32 bg-transparent border-none focus:ring-0 text-sm text-zinc-800 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-600 resize-none font-mono"
+                                />
+                                <div className="flex justify-end mt-2">
+                                  <Button 
+                                    size="sm" 
+                                    className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold tracking-widest uppercase"
+                                    onClick={() => handleSaveNote(step.id, notesData[step.id] || '')}
+                                    disabled={savingNote[step.id]}
+                                  >
+                                    {savingNote[step.id] ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : null}
+                                    Save Logs
+                                  </Button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+
+                          {activeAction[step.id] === 'resources' && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                              <div className="bg-cyan-50 dark:bg-cyan-950/10 border border-cyan-100 dark:border-cyan-900/30 rounded-xl p-6 mt-2">
+                                <h4 className="text-xs font-bold text-cyan-700 dark:text-cyan-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Info className="w-4 h-4"/> External Intel</h4>
+                                {step.resources && step.resources.length > 0 ? (
+                                  <ul className="space-y-3">
+                                    {step.resources.map((res: any, i: number) => (
+                                      <li key={i}>
+                                        <a href={res.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-cyan-600 dark:hover:text-cyan-400 flex items-center gap-2 transition-colors">
+                                          <ExternalLink className="w-3 h-3" />
+                                          {res.title}
+                                        </a>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-sm text-zinc-500 font-mono italic">No external intel found for this step.</p>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     </div>
                   </motion.div>

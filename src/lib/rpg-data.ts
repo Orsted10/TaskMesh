@@ -253,3 +253,45 @@ export function getTierAesthetic(tier: string) {
     accent: "bg-emerald-600 dark:bg-emerald-500"
   };
 }
+
+// ==========================================
+// 10,000-POINT MASTERY SYSTEM (20 TIERS)
+// ==========================================
+
+export const MASTERY_TIERS = [
+  { max: 499, name: "Novice", color: "text-gray-400" },
+  { max: 999, name: "Apprentice", color: "text-gray-300" },
+  { max: 1499, name: "Journeyman", color: "text-green-400" },
+  { max: 1999, name: "Adept", color: "text-green-300" },
+  { max: 2499, name: "Expert", color: "text-emerald-400" },
+  { max: 2999, name: "Artisan", color: "text-emerald-300" },
+  { max: 3499, name: "Master", color: "text-blue-400" },
+  { max: 3999, name: "High Master", color: "text-blue-300" },
+  { max: 4499, name: "Grand Master", color: "text-indigo-400" },
+  { max: 4999, name: "Elite", color: "text-indigo-300" },
+  { max: 5499, name: "Champion", color: "text-purple-400" },
+  { max: 5999, name: "Hero", color: "text-purple-300" },
+  { max: 6499, name: "Legend", color: "text-fuchsia-400" },
+  { max: 6999, name: "Mythic", color: "text-fuchsia-300" },
+  { max: 7499, name: "Demigod", color: "text-pink-400" },
+  { max: 7999, name: "Immortal", color: "text-rose-400" },
+  { max: 8499, name: "Ascendant", color: "text-orange-400" },
+  { max: 8999, name: "Transcendent", color: "text-orange-300" },
+  { max: 9499, name: "Omniscient", color: "text-yellow-400" },
+  { max: 10000, name: "Sovereign", color: "text-yellow-300 drop-shadow-[0_0_8px_rgba(253,224,71,0.8)]" }
+];
+
+export function getSkillMasteryTier(points: number) {
+  const safePoints = Math.max(0, Math.min(10000, points));
+  const tierIndex = MASTERY_TIERS.findIndex(t => safePoints <= t.max);
+  const tier = MASTERY_TIERS[tierIndex !== -1 ? tierIndex : 19];
+  
+  return {
+    level: (tierIndex !== -1 ? tierIndex : 19) + 1,
+    name: tier.name,
+    color: tier.color,
+    currentPoints: safePoints,
+    nextTierPoints: tierIndex < 19 ? MASTERY_TIERS[tierIndex].max + 1 : 10000,
+    prevTierPoints: tierIndex > 0 ? MASTERY_TIERS[tierIndex - 1].max + 1 : 0,
+  };
+}

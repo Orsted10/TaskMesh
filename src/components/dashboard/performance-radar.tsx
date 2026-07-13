@@ -15,20 +15,38 @@ export function PerformanceRadar() {
     );
   }
 
-  // Use actual skills from profile, fallback to base 10 if new
-  const skills = rpgProfile.skills || {
-    strength: 10, intelligence: 10, charisma: 10, 
-    creativity: 10, craftsmanship: 10, willpower: 10
-  };
-
-  const data = [
-    { subject: 'STR', A: skills.strength, fullMark: 100 },
-    { subject: 'INT', A: skills.intelligence, fullMark: 100 },
-    { subject: 'CHA', A: skills.charisma, fullMark: 100 },
-    { subject: 'CRE', A: skills.creativity, fullMark: 100 },
-    { subject: 'CRA', A: skills.craftsmanship, fullMark: 100 },
-    { subject: 'WIL', A: skills.willpower, fullMark: 100 },
-  ];
+  // Map specific skills to radar
+  const specificSkills = rpgProfile.specific_skills || {};
+  let data: any[] = [];
+  
+  const skillKeys = Object.keys(specificSkills);
+  
+  if (skillKeys.length > 0) {
+    // Sort by highest value and take top 8 to prevent radar from getting too cluttered
+    const topSkills = skillKeys
+      .sort((a, b) => specificSkills[b] - specificSkills[a])
+      .slice(0, 8);
+      
+    data = topSkills.map(skill => ({
+      subject: skill.length > 10 ? skill.substring(0, 8) + '..' : skill,
+      A: Math.min(specificSkills[skill], 10000), // Cap at 10k
+      fullMark: 10000
+    }));
+  } else {
+    // Fallback to core stats scaled to 10k style for consistency
+    const skills = rpgProfile.skills || {
+      strength: 10, intelligence: 10, charisma: 10, 
+      creativity: 10, craftsmanship: 10, willpower: 10
+    };
+    data = [
+      { subject: 'STR', A: skills.strength * 100, fullMark: 10000 },
+      { subject: 'INT', A: skills.intelligence * 100, fullMark: 10000 },
+      { subject: 'CHA', A: skills.charisma * 100, fullMark: 10000 },
+      { subject: 'CRE', A: skills.creativity * 100, fullMark: 10000 },
+      { subject: 'CRA', A: skills.craftsmanship * 100, fullMark: 10000 },
+      { subject: 'WIL', A: skills.willpower * 100, fullMark: 10000 },
+    ];
+  }
 
   return (
     <div className="w-full h-[300px] relative flex items-center justify-center group">
@@ -44,9 +62,9 @@ export function PerformanceRadar() {
           <PolarGrid stroke="#ff4655" strokeOpacity={0.15} strokeDasharray="3 3" />
           <PolarAngleAxis 
             dataKey="subject" 
-            tick={{ fill: '#a1a1aa', fontSize: 12, fontFamily: 'monospace', fontWeight: 'bold' }}
+            tick={{ fill: '#a1a1aa', fontSize: 10, fontFamily: 'monospace', fontWeight: 'bold' }}
           />
-          <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+          <PolarRadiusAxis angle={30} domain={[0, 10000]} tick={false} axisLine={false} />
           
           {/* Inner Radar (Actual Stats) */}
           <Radar
