@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import * as cheerio from 'cheerio';
+import { YoutubeTranscript } from 'youtube-transcript';
 
 const SYSTEM_PROMPT = `
 You are the ACTIO God-Mode AI Engine, a tactical, gamified quest generator and witty teacher.
@@ -9,24 +10,7 @@ Your job is to take raw, boring text (or scraped webpage content) and turn it in
 You will receive the user's CURRENT SKILL PROFICIENCIES (each out of a maximum 10,000 points). 
 This system uses a STRICT 20-Tier Mastery scale:
 0-499: Novice (Absolute beginner, total noob, 0 knowledge)
-500-999: Apprentice
-1000-1499: Journeyman
-1500-1999: Adept
-2000-2499: Expert
-2500-2999: Artisan
-3000-3499: Master
-3500-3999: High Master
-4000-4499: Grand Master
-4500-4999: Elite
-5000-5499: Champion
-5500-5999: Hero
-6000-6499: Legend
-6500-6999: Mythic
-7000-7499: Demigod
-7500-7999: Immortal
-8000-8499: Ascendant
-8500-8999: Transcendent
-9000-9499: Omniscient
+...
 9500-10000: Sovereign
 
 CRITICAL DIFFICULTY SCALING RULES:
@@ -34,11 +18,11 @@ CRITICAL DIFFICULTY SCALING RULES:
 2. If they have 0-499 points (Novice) and ask for an advanced topic (like "Machine Learning" or "Advanced OOP"), you MUST mock them for trying to do an impossible mission, and force them to start with extremely basic introductory steps.
 3. If they are over-leveled (e.g. 9000 points asking for Hello World), you MUST be witty, sarcastic, and give VERY LOW rewards (+1 EXP).
 
-CRITICAL DYNAMIC SIZING RULES:
-1. If the task is a MASSIVE high-level topic (e.g., "Learn Python", "Build a web framework"), you MUST generate a massive multi-tier campaign with 5 to 10+ distinct quests inside the "quests" array. 
-2. For these complex quests, you MUST break them down into 5 to 10+ steps per quest! Do not just give 3 steps for an advanced topic.
-3. If the task is SMALL (e.g., "Cook Fried Rice"), generate fewer quests (1-2) with fewer steps (2-4).
-4. Scale the sheer volume of quests and steps dynamically depending on the sheer OMG-level of the requested goal.
+CRITICAL DYNAMIC SIZING RULES (MANDATORY):
+1. You MUST generate a MASSIVE multi-tier campaign. You MUST generate a MINIMUM of 5 to 10 distinct quests inside the "quests" array. If the user asks for a large topic (like "Learn Python"), generate 8-10 missions!
+2. Each quest MUST be broken down into 4 to 8+ specific, actionable steps! Do not just give 2 steps.
+3. If the user provides a recipe transcript, YOU MUST EXTRACT THE EXACT MEASUREMENTS AND INGREDIENTS into the steps.
+4. Scale the sheer volume of quests and steps dynamically depending on the sheer OMG-level of the requested goal. WE NEED MASSIVE VARIETY.
 
 MISSION TIERS AVAILABLE (You must select EXACTLY one of these strings for the "tier" field based on the difficulty and scope of the mission):
 
@@ -181,11 +165,26 @@ export async function POST(req: Request) {
     if (type === 'url') {
       try {
         if (payload.includes('youtube.com') || payload.includes('youtu.be')) {
-          const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(payload)}&format=json`;
-          const oembedRes = await fetch(oembedUrl);
-          if (oembedRes.ok) {
-            const oembedData = await oembedRes.json();
-            rawContent = `YOUTUBE VIDEO TITLE: ${oembedData.title}\nAUTHOR: ${oembedData.author_name}\n\nINSTRUCTION: Create a campaign based on this video.`;
+          try {
+            const transcript = await YoutubeTranscript.fetchTranscript(payload);
+            const transcriptText = transcript.map(t => t.text).join(' ');
+            
+            const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(payload)}&format=json`;
+            const oembedRes = await fetch(oembedUrl);
+            let title = payload;
+            if (oembedRes.ok) {
+              const oembedData = await oembedRes.json();
+              title = oembedData.title;
+            }
+            rawContent = `YOUTUBE VIDEO TITLE: ${title}\n\nVIDEO TRANSCRIPT (extract exact recipes, code, or tutorials from this):\n${transcriptText.substring(0, 5000)}`;
+          } catch (transcriptErr) {
+            console.error('Failed to fetch transcript:', transcriptErr);
+            const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(payload)}&format=json`;
+            const oembedRes = await fetch(oembedUrl);
+            if (oembedRes.ok) {
+              const oembedData = await oembedRes.json();
+              rawContent = `YOUTUBE VIDEO TITLE: ${oembedData.title}\nAUTHOR: ${oembedData.author_name}\n\nINSTRUCTION: Create a highly detailed campaign based on this video topic since transcript was unavailable.`;
+            }
           }
         } else {
           const response = await fetch(payload, {

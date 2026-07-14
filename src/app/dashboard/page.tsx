@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Crosshair, Activity, Target, Zap, ShieldAlert, Loader2, Play, Trash2, 
-  Terminal, Cpu, Hexagon, Fingerprint, ScanEye, Flame, Database
+  Terminal, Cpu, Hexagon, Fingerprint, ScanEye, Flame, Database, FolderOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
@@ -41,7 +41,7 @@ export default function Dashboard() {
         )
       `)
       .eq('user_id', user.id)
-      .eq('status', 'in_progress')
+      .in('status', ['pending', 'in_progress', 'verifying'])
       .order('started_at', { ascending: false });
     
     if (!error && data) {
@@ -58,12 +58,8 @@ export default function Dashboard() {
   const handleDeleteMission = async (questId: string) => {
     if (!confirm("Are you sure you want to permanently terminate this mission?")) return;
     try {
-      const res = await fetch(`/api/mission/${questId}`, {
-        method: 'DELETE'
-      });
-      if (!res.ok) {
-        throw new Error('Failed to delete mission');
-      }
+      const { error } = await supabase.from('quests').delete().eq('id', questId).eq('creator_id', user?.id);
+      if (error) throw error;
       toast.success("Mission Terminated", { description: "The operation has been permanently scrubbed from the active matrix." });
       fetchActiveMissions();
     } catch (err: any) {
@@ -120,6 +116,7 @@ export default function Dashboard() {
             mission_type: quest.mission_type,
             rewards: quest.rewards,
             creator_id: user.id,
+            campaign_title: generatedQuest.campaign_title || 'TACTICAL OPERATION',
           })
           .select()
           .single();
@@ -144,7 +141,7 @@ export default function Dashboard() {
           .insert({
             user_id: user.id,
             quest_id: questData.id,
-            status: 'in_progress',
+            status: 'pending',
           });
         if (progressError) throw progressError;
       }
@@ -539,39 +536,53 @@ export default function Dashboard() {
                   <p className="text-zinc-500 text-[10px] uppercase tracking-[0.2em] font-bold">No Operations Found</p>
                 </div>
               ) : (
-                activeMissions.map((mission) => {
-                  const aesthetic = getTierAesthetic(mission.quests?.tier);
-                  return (
-                    <div 
-                      key={mission.id} 
-                      className="bg-black border border-zinc-800 p-4 rounded-xl hover:border-[#ff4655]/50 transition-all duration-300 group/item cursor-pointer relative overflow-hidden shadow-md hover:shadow-[0_0_20px_rgba(255,70,85,0.15)]"
-                    >
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-zinc-700 group-hover/item:bg-[#ff4655] transition-colors duration-500" />
-                      
-                      <div className="flex justify-between items-start mb-3 pl-2">
-                        <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-[0.2em] border border-zinc-800 px-2 py-0.5 rounded shadow-inner">
-                          LVL {mission.quests?.difficulty || 1}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] text-zinc-500 uppercase tracking-[0.2em] font-mono">{mission.quests?.category || 'General'}</span>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleDeleteMission(mission.quests?.id); }}
-                            className="text-zinc-600 hover:text-[#ff4655] transition-colors p-1.5 rounded-md hover:bg-[#ff4655]/10 border border-transparent hover:border-[#ff4655]/20"
-                            title="Terminate Mission"
+                (Object.entries(
+                  activeMissions.reduce((acc, mission) => {
+                    const camp = mission.quests?.campaign_title || 'TACTICAL OPERATION';
+                    if (!acc[camp]) acc[camp] = [];
+                    acc[camp].push(mission);
+                    return acc;
+                  }, {} as Record<string, any[]>)
+                ) as [string, any[]][]).map(([campaignTitle, ops]) => (
+                  <div key={campaignTitle} className="space-y-2 mb-6">
+                    <h3 className="text-[10px] text-zinc-500 font-mono font-bold uppercase tracking-widest border-b border-zinc-800 pb-1 mb-2">
+                      <FolderOpen className="inline w-3 h-3 mr-1" /> {campaignTitle}
+                    </h3>
+                    {ops.map((mission) => {
+                      const aesthetic = getTierAesthetic(mission.quests?.tier);
+                      return (
+                        <div 
+                          key={mission.id} 
+                          className="bg-black border border-zinc-800 p-4 rounded-xl hover:border-[#ff4655]/50 transition-all duration-300 group/item cursor-pointer relative overflow-hidden shadow-md hover:shadow-[0_0_20px_rgba(255,70,85,0.15)]"
+                        >
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-zinc-700 group-hover/item:bg-[#ff4655] transition-colors duration-500" />
+                          
+                          <div className="flex justify-between items-start mb-3 pl-2">
+                            <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-[0.2em] border border-zinc-800 px-2 py-0.5 rounded shadow-inner">
+                              LVL {mission.quests?.difficulty || 1}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] text-zinc-500 uppercase tracking-[0.2em] font-mono">{mission.quests?.category || 'General'}</span>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleDeleteMission(mission.quests?.id); }}
+                                className="text-zinc-600 hover:text-[#ff4655] transition-colors p-1.5 rounded-md hover:bg-[#ff4655]/10 border border-transparent hover:border-[#ff4655]/20 z-20"
+                                title="Terminate Mission"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                          <h4 
+                            onClick={() => router.push(`/mission/${mission.quests?.id}`)} 
+                            className="font-teko text-2xl text-zinc-300 uppercase leading-none truncate group-hover/item:text-white transition-colors pl-2 pr-2"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                            {mission.quests?.title || 'Unknown Protocol'}
+                          </h4>
                         </div>
-                      </div>
-                      <h4 
-                        onClick={() => router.push(`/mission/${mission.quests?.id}`)} 
-                        className="font-teko text-2xl text-zinc-300 uppercase leading-none truncate group-hover/item:text-white transition-colors pl-2 pr-2"
-                      >
-                        {mission.quests?.title || 'Unknown Protocol'}
-                      </h4>
-                    </div>
-                  );
-                })
+                      );
+                    })}
+                  </div>
+                ))
               )}
             </div>
           </motion.div>
