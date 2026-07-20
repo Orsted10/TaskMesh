@@ -45,7 +45,7 @@ export default function ActiveOperationsPage() {
       if (!error && data) {
         // Compute derived progress for each mission
         const processedData = data.map(op => {
-          const totalSteps = op.quests?.quest_steps?.length || 0;
+          const totalSteps = (op.quests as any)?.quest_steps?.length || 0;
           const verifiedSteps = op.user_step_verifications?.filter((v: any) => v.status === 'verified').length || 0;
           const progressPercent = totalSteps > 0 ? Math.round((verifiedSteps / totalSteps) * 100) : 0;
           
