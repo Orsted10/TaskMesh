@@ -32,6 +32,8 @@ export type RpgProfile = {
     sound_fx?: boolean;
     linked_hardware?: Record<string, boolean>;
     ghost_protocol?: boolean;
+    auto_accept?: boolean;
+    ui_density?: string;
     notifications?: {
       email?: boolean;
       push?: boolean;
