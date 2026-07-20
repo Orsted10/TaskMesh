@@ -3,10 +3,12 @@
 import { Bell, Search, User as UserIcon } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { useRouter } from 'next/navigation';
 
 export function Topbar() {
   const { user, rpgProfile } = useAuth();
-  const displayName = user?.user_metadata?.full_name || rpgProfile?.username || 'AGENT';
+  const router = useRouter();
+  const displayName = rpgProfile?.full_name || user?.user_metadata?.full_name || rpgProfile?.username || 'AGENT';
 
   return (
     <div className="h-20 w-full bg-white/50 dark:bg-zinc-950/80 backdrop-blur-md border-b border-gray-200 dark:border-zinc-900 sticky top-0 z-30 px-8 flex items-center justify-between">
@@ -34,7 +36,7 @@ export function Topbar() {
 
         <div className="w-[1px] h-8 bg-gray-200 dark:bg-zinc-800" />
 
-        <div className="flex items-center gap-4 cursor-pointer group">
+        <div onClick={() => router.push('/dashboard/profile')} className="flex items-center gap-4 cursor-pointer group">
           <div className="text-right hidden sm:block">
             <div className="text-white font-bold text-sm tracking-wider uppercase group-hover:text-[#ff4655] transition-colors">{displayName}</div>
             <div className="text-zinc-500 text-[10px] font-mono uppercase">Level {rpgProfile?.level || 1} • {rpgProfile?.title || 'Novice'}</div>

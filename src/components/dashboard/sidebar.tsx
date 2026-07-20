@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { 
-  Crosshair, Activity, Target, Zap, ShieldAlert, Settings, LogOut
+  Crosshair, Activity, Target, Zap, ShieldAlert, Settings, LogOut, User as UserIcon, Globe,
+  Terminal, Gavel, MonitorPlay
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
@@ -13,9 +14,14 @@ import { useRouter } from 'next/navigation';
 const NAV_ITEMS = [
   { name: 'Command Center', path: '/dashboard', icon: Crosshair },
   { name: 'Active Operations', path: '/dashboard/operations', icon: Activity },
+  { name: 'World Map', path: '/dashboard/map', icon: Globe },
   { name: 'Global Intel', path: '/dashboard/intel', icon: Target },
   { name: 'The Arsenal', path: '/dashboard/arsenal', icon: Zap },
   { name: 'Guilds', path: '/dashboard/guilds', icon: ShieldAlert },
+  { name: 'The Tribunal', path: '/dashboard/tribunal', icon: Gavel },
+  { name: 'HUD Mode', path: '/dashboard/hud', icon: MonitorPlay },
+  { name: 'Developer', path: '/dashboard/developer', icon: Terminal },
+  { name: 'Profile', path: '/dashboard/profile', icon: UserIcon },
   { name: 'Settings', path: '/dashboard/settings', icon: Settings },
 ];
 

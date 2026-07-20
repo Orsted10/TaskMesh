@@ -14,6 +14,8 @@ export type RpgProfile = {
   total_exp: number;
   current_streak: number;
   multiplier: number;
+  gold: number;
+  shine: number;
   title: string;
   skills: {
     strength: number;
@@ -57,18 +59,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [rpgProfile, setRpgProfile] = useState<RpgProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (authUser: User) => {
     try {
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('id', userId)
+        .eq('id', authUser.id)
         .maybeSingle();
       
       if (error) {
         console.error("Error fetching RPG profile:", error.message);
         return;
       }
+      
       if (data) {
         // Fallback for skills if they don't match the new schema perfectly yet
         const defaultSkills = { strength: 0, intelligence: 0, charisma: 0, creativity: 0, craftsmanship: 0, willpower: 0 };
@@ -79,6 +82,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         data.preferences = { ...defaultPrefs, ...(data.preferences || {}) };
 
         setRpgProfile(data as RpgProfile);
+      } else {
+        // User is logged in but missing from public.users (happens if trigger was added late)
+        console.log("No RPG profile found. Self-healing...");
+        
+        const rawName = authUser.user_metadata?.full_name || authUser.email || 'Operative';
+        const cleanUsername = rawName.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').toLowerCase() + Math.floor(Math.random() * 1000);
+        
+        const newProfile = {
+          id: authUser.id,
+          username: cleanUsername,
+          full_name: rawName,
+          level: 42,
+          title: 'Cybernetics Architect',
+          total_exp: 142500
+        };
+        
+        const { data: inserted, error: insertErr } = await supabase
+          .from('users')
+          .insert(newProfile)
+          .select()
+          .single();
+          
+        if (!insertErr && inserted) {
+           setRpgProfile(inserted as RpgProfile);
+        }
       }
     } catch (err) {
       console.error("Failed to fetch RPG Profile", err);
@@ -87,7 +115,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const refreshProfile = async () => {
     if (user) {
-      await fetchProfile(user.id);
+      await fetchProfile(user);
     }
   };
 
@@ -97,7 +125,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (session?.user) {
         setUser(session.user);
-        await fetchProfile(session.user.id);
+        await fetchProfile(session.user);
       }
       
       setLoading(false);
@@ -105,7 +133,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
         setUser(session?.user ?? null);
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          await fetchProfile(session.user);
         } else {
           setRpgProfile(null);
         }

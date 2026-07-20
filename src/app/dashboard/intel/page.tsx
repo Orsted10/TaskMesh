@@ -3,8 +3,43 @@
 import { motion } from 'framer-motion';
 import { Radar, Crosshair, Globe, AlertTriangle, Fingerprint, MapPin, Zap } from 'lucide-react';
 import { MarqueeTicker } from '@/components/gamified-ui';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase/client';
 
 export default function GlobalIntelPage() {
+  const [feed, setFeed] = useState<any[]>([]);
+  const [bountyTotal, setBountyTotal] = useState(4281); // Mock for now until we aggregate real bounties
+
+  useEffect(() => {
+    const fetchFeed = async () => {
+      const { data } = await supabase
+        .from('feed_events')
+        .select(`
+          id, event_type, title, color, created_at,
+          users ( username )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (data) setFeed(data);
+    };
+    
+    fetchFeed();
+
+    const channel = supabase.channel('public:feed_events')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'feed_events' }, payload => {
+        supabase.from('feed_events').select(`id, event_type, title, color, created_at, users(username)`).eq('id', payload.new.id).single().then(({ data }) => {
+          if (data) {
+            setFeed(prev => [data, ...prev].slice(0, 50));
+          }
+        });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
   return (
     <div className="space-y-8 w-full max-w-[1600px] mx-auto pb-24">
       <div className="w-full bg-[#10b981]/10 border-y border-[#10b981]/30 shadow-[0_0_20px_rgba(16,185,129,0.15)] relative z-10 rounded-sm overflow-hidden mt-[-10px]">
@@ -30,28 +65,28 @@ export default function GlobalIntelPage() {
             </h2>
             
             <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar pr-2">
-              {[
-                { user: 'Viper_09', action: 'Verified 5km Run', time: 'Just now', color: 'text-emerald-500' },
-                { user: 'Cipher', action: 'Deployed React App', time: '2m ago', color: 'text-blue-500' },
-                { user: 'GhostProtocol', action: 'Mapped 14 Potholes', time: '12m ago', color: 'text-yellow-500' },
-                { user: 'Omen', action: 'Reached Level 50 Coding', time: '1hr ago', color: 'text-purple-500' },
-                { user: 'Kael', action: 'Claimed Bounty: Tree Planting', time: '2hrs ago', color: 'text-emerald-500' },
-                { user: 'Sova', action: 'Completed Advanced Calculus', time: '3hrs ago', color: 'text-red-500' },
-                { user: 'Neon', action: 'Verified 100 Pushups', time: '4hrs ago', color: 'text-orange-500' },
-              ].map((log, i) => (
-                <div key={i} className="bg-black/50 border border-zinc-800 p-4 rounded-xl flex flex-col gap-2 relative group hover:border-blue-500/30 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono flex items-center gap-1">
-                      <Fingerprint className="w-3 h-3 text-zinc-700" /> {log.user}
-                    </span>
-                    <span className="text-[9px] text-zinc-600 font-mono">{log.time}</span>
-                  </div>
-                  <div className="font-teko text-xl text-white uppercase tracking-wider flex items-center gap-2">
-                    <span className={`w-1.5 h-1.5 rounded-full ${log.color.replace('text', 'bg')}`} />
-                    {log.action}
-                  </div>
+              {feed.length === 0 ? (
+                <div className="text-center p-8 text-zinc-500 font-mono text-[10px] uppercase tracking-widest border border-dashed border-zinc-800 rounded-xl">
+                  AWAITING INTEL... NO EVENTS FOUND.
                 </div>
-              ))}
+              ) : (
+                feed.map((log) => (
+                  <div key={log.id} className="bg-black/50 border border-zinc-800 p-4 rounded-xl flex flex-col gap-2 relative group hover:border-blue-500/30 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono flex items-center gap-1">
+                        <Fingerprint className="w-3 h-3 text-zinc-700" /> {log.users?.username || 'GHOST_OPERATIVE'}
+                      </span>
+                      <span className="text-[9px] text-zinc-600 font-mono">
+                        {new Date(log.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </span>
+                    </div>
+                    <div className="font-teko text-xl text-white uppercase tracking-wider flex items-center gap-2">
+                      <span className={`w-1.5 h-1.5 rounded-full ${log.color.replace('text', 'bg')}`} />
+                      {log.title}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </motion.div>
         </div>

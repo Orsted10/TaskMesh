@@ -1,11 +1,56 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Shield, Swords, Castle, Flag, Users, Cpu, Server, Box } from 'lucide-react';
-import { useState } from 'react';
+import { Shield, Swords, Castle, Flag, Users, Cpu, Server, Box, PlusCircle, LogIn } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/context/auth-context';
+import { toast } from 'sonner';
 
 export default function GuildsPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'leaderboard' | 'base'>('leaderboard');
+  const [guilds, setGuilds] = useState<any[]>([]);
+  const [myGuild, setMyGuild] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGuildData = async () => {
+      if (!user) return;
+      
+      try {
+        // Fetch Top Guilds
+        const { data: leaderboardData } = await supabase
+          .from('guilds')
+          .select('*')
+          .order('total_exp', { ascending: false })
+          .limit(10);
+        
+        if (leaderboardData) setGuilds(leaderboardData);
+
+        // Fetch My Guild
+        const { data: memberData } = await supabase
+          .from('guild_members')
+          .select('*, guilds(*)')
+          .eq('user_id', user.id)
+          .single();
+
+        if (memberData?.guilds) {
+          setMyGuild(memberData.guilds);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGuildData();
+  }, [user]);
+
+  const handleCreateGuild = async () => {
+    toast.error('Guild Creation requires Level 10 and 5,000 A-Coins.');
+  };
 
   return (
     <div className="space-y-8 w-full max-w-[1600px] mx-auto pb-24">
@@ -55,30 +100,36 @@ export default function GuildsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/50">
-                  {[
-                    { rank: 1, name: 'Neon Samurai', spec: 'Cybersecurity', xp: '12.4M', color: 'text-fuchsia-500', bg: 'bg-fuchsia-500/10' },
-                    { rank: 2, name: 'Iron Forged', spec: 'Fitness', xp: '11.8M', color: 'text-red-500', bg: 'bg-red-500/10' },
-                    { rank: 3, name: 'Code Cartel', spec: 'Engineering', xp: '10.2M', color: 'text-blue-500', bg: 'bg-blue-500/10' },
-                    { rank: 4, name: 'Void Walkers', spec: 'General', xp: '8.9M', color: 'text-zinc-300', bg: 'bg-transparent' },
-                    { rank: 5, name: 'Synthetix', spec: 'Data Science', xp: '7.5M', color: 'text-zinc-300', bg: 'bg-transparent' },
-                  ].map((guild) => (
-                    <tr key={guild.rank} className={`hover:bg-zinc-900/50 transition-colors ${guild.rank === 1 ? 'border-l-4 border-l-fuchsia-500' : ''}`}>
-                      <td className="px-6 py-4">
-                        <span className={`font-teko text-2xl ${guild.color}`}>#{guild.rank}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="font-teko text-2xl text-white uppercase tracking-wider">{guild.name}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`text-[10px] font-mono uppercase tracking-widest px-2 py-1 rounded ${guild.bg} border ${guild.bg.replace('bg', 'border')}`}>
-                          {guild.spec}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="font-mono text-lg text-yellow-500 font-bold">{guild.xp}</span>
+                  {guilds.length === 0 && !loading ? (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-8 text-center text-zinc-500 font-mono text-[10px] uppercase tracking-widest">
+                        NO FACTIONS DETECTED IN SECTOR.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    guilds.map((guild, index) => {
+                      const rank = index + 1;
+                      const isTop = rank === 1;
+                      return (
+                        <tr key={guild.id} className={`hover:bg-zinc-900/50 transition-colors ${isTop ? 'border-l-4 border-l-fuchsia-500' : ''}`}>
+                          <td className="px-6 py-4">
+                            <span className={`font-teko text-2xl ${isTop ? 'text-fuchsia-500' : 'text-zinc-500'}`}>#{rank}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="font-teko text-2xl text-white uppercase tracking-wider">{guild.name}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-[10px] font-mono uppercase tracking-widest px-2 py-1 rounded bg-zinc-800 border border-zinc-700 text-zinc-400">
+                              LEVEL {guild.level || 1}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <span className="font-mono text-lg text-yellow-500 font-bold">{guild.total_exp?.toLocaleString() || 0}</span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -92,22 +143,40 @@ export default function GuildsPage() {
                 Your Faction
               </h2>
 
-              <div className="text-center mb-8 relative z-10">
-                <div className="w-24 h-24 mx-auto border-2 border-fuchsia-500 bg-fuchsia-500/20 rotate-45 rounded flex items-center justify-center mb-6">
-                  <div className="-rotate-45 font-teko text-5xl text-white">NS</div>
-                </div>
-                <h3 className="font-teko text-4xl text-fuchsia-500 uppercase tracking-widest leading-none">Neon Samurai</h3>
-                <p className="text-[10px] text-zinc-400 font-mono uppercase tracking-widest mt-2">Rank #1 • 150 Members</p>
-              </div>
+              {myGuild ? (
+                <>
+                  <div className="text-center mb-8 relative z-10">
+                    <div className="w-24 h-24 mx-auto border-2 border-fuchsia-500 bg-fuchsia-500/20 rotate-45 rounded flex items-center justify-center mb-6">
+                      <div className="-rotate-45 font-teko text-5xl text-white">{myGuild.name.substring(0, 2).toUpperCase()}</div>
+                    </div>
+                    <h3 className="font-teko text-4xl text-fuchsia-500 uppercase tracking-widest leading-none">{myGuild.name}</h3>
+                    <p className="text-[10px] text-zinc-400 font-mono uppercase tracking-widest mt-2">Level {myGuild.level} • EXP: {myGuild.total_exp}</p>
+                  </div>
 
-              <div className="space-y-4 relative z-10">
-                <button className="w-full bg-fuchsia-600 hover:bg-fuchsia-500 text-black py-3 rounded font-teko text-xl uppercase tracking-widest transition-colors shadow-[0_0_15px_rgba(217,70,239,0.5)]">
-                  Donate Resources
-                </button>
-                <button className="w-full bg-black border border-zinc-800 hover:border-zinc-600 text-white py-3 rounded font-teko text-xl uppercase tracking-widest transition-colors">
-                  Guild Chat (3 New)
-                </button>
-              </div>
+                  <div className="space-y-4 relative z-10">
+                    <button className="w-full bg-fuchsia-600 hover:bg-fuchsia-500 text-black py-3 rounded font-teko text-xl uppercase tracking-widest transition-colors shadow-[0_0_15px_rgba(217,70,239,0.5)]">
+                      Donate Resources
+                    </button>
+                    <button className="w-full bg-black border border-zinc-800 hover:border-zinc-600 text-white py-3 rounded font-teko text-xl uppercase tracking-widest transition-colors">
+                      Guild Chat
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8 relative z-10">
+                  <Shield className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
+                  <h3 className="font-teko text-3xl text-white uppercase tracking-widest mb-2">No Faction Assigned</h3>
+                  <p className="text-zinc-500 text-[10px] font-mono uppercase tracking-widest mb-8">Join a guild to access Faction Wars and Base Modules.</p>
+                  <div className="space-y-4">
+                    <button onClick={handleCreateGuild} className="w-full flex items-center justify-center gap-2 bg-fuchsia-600 hover:bg-fuchsia-500 text-black py-3 rounded font-teko text-xl uppercase tracking-widest transition-colors shadow-[0_0_15px_rgba(217,70,239,0.5)]">
+                      <PlusCircle className="w-5 h-5" /> Establish Faction
+                    </button>
+                    <button className="w-full flex items-center justify-center gap-2 bg-black border border-zinc-800 hover:border-zinc-600 text-white py-3 rounded font-teko text-xl uppercase tracking-widest transition-colors">
+                      <LogIn className="w-5 h-5" /> Browse Factions
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>

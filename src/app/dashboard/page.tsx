@@ -55,9 +55,10 @@ export default function Dashboard() {
     }
   }, [user]);
 
-  const handleDeleteMission = async (questId: string) => {
+  const handleDeleteMission = async (progressId: string, questId: string) => {
     if (!confirm("Are you sure you want to permanently terminate this mission?")) return;
     try {
+      await supabase.from('user_quest_progress').delete().eq('id', progressId);
       const { error } = await supabase.from('quests').delete().eq('id', questId).eq('creator_id', user?.id);
       if (error) throw error;
       toast.success("Mission Terminated", { description: "The operation has been permanently scrubbed from the active matrix." });
@@ -564,7 +565,7 @@ export default function Dashboard() {
                             <div className="flex items-center gap-2">
                               <span className="text-[9px] text-zinc-500 uppercase tracking-[0.2em] font-mono">{mission.quests?.category || 'General'}</span>
                               <button 
-                                onClick={(e) => { e.stopPropagation(); handleDeleteMission(mission.quests?.id); }}
+                                onClick={(e) => { e.stopPropagation(); handleDeleteMission(mission.id, mission.quests?.id); }}
                                 className="text-zinc-600 hover:text-[#ff4655] transition-colors p-1.5 rounded-md hover:bg-[#ff4655]/10 border border-transparent hover:border-[#ff4655]/20 z-20"
                                 title="Terminate Mission"
                               >

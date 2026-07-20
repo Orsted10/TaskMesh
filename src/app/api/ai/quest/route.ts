@@ -21,7 +21,7 @@ CRITICAL DIFFICULTY SCALING RULES:
 CRITICAL DYNAMIC SIZING RULES (MANDATORY):
 1. You MUST generate a MASSIVE multi-tier campaign. You MUST generate a MINIMUM of 5 to 10 distinct quests inside the "quests" array. If the user asks for a large topic (like "Learn Python"), generate 8-10 missions!
 2. Each quest MUST be broken down into 4 to 8+ specific, actionable steps! Do not just give 2 steps.
-3. If the user provides a recipe transcript, YOU MUST EXTRACT THE EXACT MEASUREMENTS AND INGREDIENTS into the steps.
+3. RECIPE / COOKING OVERRIDE: If the input is a food recipe (e.g. YouTube cooking video), YOU ABSOLUTELY MUST EXTRACT THE EXACT INGREDIENTS AND MEASUREMENTS. Create quests for "Ingredient Acquisition", "Prep Work", and "Cooking Steps". Put exact measurements in the step instructions. DO NOT give generic "cook the food" steps.
 4. Scale the sheer volume of quests and steps dynamically depending on the sheer OMG-level of the requested goal. WE NEED MASSIVE VARIETY.
 
 MISSION TIERS AVAILABLE (You must select EXACTLY one of these strings for the "tier" field based on the difficulty and scope of the mission):
