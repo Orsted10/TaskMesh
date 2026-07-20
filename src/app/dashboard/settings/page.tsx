@@ -149,11 +149,11 @@ export default function SettingsPage() {
               <div 
                 key={persona.id}
                 onClick={() => setActivePersona(persona.id)}
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col gap-2 relative ${activePersona === persona.id ? \`bg-zinc-900 \${persona.border}\` : 'bg-black border-zinc-800 hover:border-zinc-700'}`}
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col gap-2 relative ${activePersona === persona.id ? `bg-zinc-900 ${persona.border}` : 'bg-black border-zinc-800 hover:border-zinc-700'}`}
               >
                 {activePersona === persona.id && (
                   <div className="absolute top-2 right-2 flex items-center gap-1">
-                    <span className={`w-2 h-2 rounded-full animate-pulse \${persona.border.replace('border-', 'bg-')}`} />
+                    <span className={`w-2 h-2 rounded-full animate-pulse ${persona.border.replace('border-', 'bg-')}`} />
                   </div>
                 )}
                 <div className="text-3xl mb-2">{persona.icon}</div>
