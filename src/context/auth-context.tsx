@@ -38,6 +38,8 @@ export type RpgProfile = {
       email?: boolean;
       push?: boolean;
       sms?: boolean;
+      bounty_alerts?: boolean;
+      guild_pings?: boolean;
     };
   };
 };
