@@ -440,12 +440,12 @@ export default function RPGPage() {
           </div>
           
           <div className="flex gap-12 font-mono text-sm font-bold text-white/50 uppercase tracking-widest">
-            <Link href="#" className="hover:text-primary transition-all duration-300 cursor-none relative group">
+            <Link href="/privacy" className="hover:text-primary transition-all duration-300 cursor-none relative group">
               <span className="text-primary/50 mr-2 opacity-0 group-hover:opacity-100 transition-opacity">»</span>
               Privacy_Policy
               <div className="absolute -bottom-2 left-0 w-0 h-[1px] bg-primary group-hover:w-full transition-all duration-300" />
             </Link>
-            <Link href="#" className="hover:text-primary transition-all duration-300 cursor-none relative group">
+            <Link href="/terms" className="hover:text-primary transition-all duration-300 cursor-none relative group">
               <span className="text-primary/50 mr-2 opacity-0 group-hover:opacity-100 transition-opacity">»</span>
               Terms_Of_Service
               <div className="absolute -bottom-2 left-0 w-0 h-[1px] bg-primary group-hover:w-full transition-all duration-300" />
