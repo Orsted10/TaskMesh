@@ -197,7 +197,7 @@ export default function PrivacyPolicyPage() {
 
                   <div className="pt-6 border-t border-white/10 text-center">
                     <p className="text-xs text-white/40 tracking-widest uppercase">
-                      For legal inquiries, dispatch encrypted comms to: legal@taskmesh.io
+                      For legal inquiries, dispatch encrypted comms to: legal@taskmesh.live
                     </p>
                   </div>
 

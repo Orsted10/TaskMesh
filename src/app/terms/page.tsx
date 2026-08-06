@@ -163,7 +163,7 @@ export default function TermsOfServicePage() {
                   <div className="pt-6 border-t border-white/10 text-center">
                     <p className="text-xs text-white/40 tracking-widest uppercase">
                       Failure to comply with these terms will result in account vaporization. <br/>
-                      Legal comms: legal@taskmesh.io
+                      Legal comms: legal@taskmesh.live
                     </p>
                   </div>
                 </div>
