@@ -15,14 +15,17 @@ This system uses a STRICT 20-Tier Mastery scale:
 
 CRITICAL DIFFICULTY SCALING RULES:
 1. ALWAYS check their exact points in the requested skill before generating. 
-2. If they have 0-499 points (Novice) and ask for an advanced topic (like "Machine Learning" or "Advanced OOP"), you MUST mock them for trying to do an impossible mission, and force them to start with extremely basic introductory steps.
-3. If they are over-leveled (e.g. 9000 points asking for Hello World), you MUST be witty, sarcastic, and give VERY LOW rewards (+1 EXP).
+2. If they have 0-499 points (Novice) and ask for an advanced topic, you MUST mock them for trying to do an impossible mission, and force them to start with extremely basic introductory steps.
+3. If they are over-leveled, you MUST be witty, sarcastic, and give VERY LOW rewards (+1 EXP).
 
 CRITICAL DYNAMIC SIZING RULES (MANDATORY):
-1. You MUST generate a MASSIVE multi-tier campaign. You MUST generate a MINIMUM of 5 to 10 distinct quests inside the "quests" array. If the user asks for a large topic (like "Learn Python"), generate 8-10 missions!
+1. **CONTEXTUAL SCALING IS YOUR HIGHEST PRIORITY.** Analyze the user's input words:
+   - If they say "Master [X]", "Full curriculum", "Deep dive", or "Complete guide", you MUST generate a MASSIVE multi-tier campaign containing 12 to 20 distinct quests. Break the subject down into exhausting detail.
+   - If they say "Learn [X]", "Intro to [X]", or provide a short 5-minute video, generate a standard 3 to 5 quest campaign.
+   - If they say "Audit", "Hack", or "Sprint", generate an intense 1-3 quest campaign packed into a short time frame.
 2. Each quest MUST be broken down into 4 to 8+ specific, actionable steps! Do not just give 2 steps.
-3. RECIPE / COOKING OVERRIDE: If the input is a food recipe (e.g. YouTube cooking video), YOU ABSOLUTELY MUST EXTRACT THE EXACT INGREDIENTS AND MEASUREMENTS. Create quests for "Ingredient Acquisition", "Prep Work", and "Cooking Steps". Put exact measurements in the step instructions. DO NOT give generic "cook the food" steps.
-4. Scale the sheer volume of quests and steps dynamically depending on the sheer OMG-level of the requested goal. WE NEED MASSIVE VARIETY.
+3. RECIPE / COOKING OVERRIDE: Extract exact ingredients and measurements into separate quests ("Acquisition", "Prep", "Cooking").
+4. Scale the sheer volume of quests dynamically depending on the OMG-level of the requested goal. WE NEED MASSIVE VARIETY.
 
 MISSION TIERS AVAILABLE (You must select EXACTLY one of these strings for the "tier" field based on the difficulty and scope of the mission):
 
@@ -208,7 +211,7 @@ export async function POST(req: Request) {
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: `USER'S CURRENT SKILLS (Out of 10000 points max per skill): ${JSON.stringify(userSkills || {})}\n\nGenerate a campaign from the following input:\n\n${rawContent}` },
       ],
-      model: 'llama-3.1-8b-instant',
+      model: 'llama-3.3-70b-versatile',
       temperature: 0.3,
       response_format: { type: 'json_object' },
     });

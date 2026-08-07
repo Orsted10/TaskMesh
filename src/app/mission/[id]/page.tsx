@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
-import { Loader2, ArrowLeft, ShieldAlert, CheckCircle, Crosshair, Zap, Activity, Clock, Terminal, AlertTriangle, Fingerprint, Database, Cpu, Wifi, Radio, BookOpen, PenLine, ExternalLink, Info } from 'lucide-react';
+import { Loader2, ArrowLeft, ShieldAlert, CheckCircle, Crosshair, Zap, Activity, Clock, Terminal, AlertTriangle, Fingerprint, Database, Cpu, Wifi, Radio, BookOpen, PenLine, ExternalLink, Info, Camera, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { getTierAesthetic } from '@/lib/rpg-data';
@@ -48,6 +48,14 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
 
   const [timeSpent, setTimeSpent] = useState(0);
   const [currentLog, setCurrentLog] = useState(SYSTEM_LOGS[0]);
+
+  // Camera Verification State
+  const [cameraActive, setCameraActive] = useState(false);
+  const [verifyingStep, setVerifyingStep] = useState<string | null>(null);
+  const [cameraError, setCameraError] = useState('');
+  const [aiVerifying, setAiVerifying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Mouse position for 3D tilt
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -138,12 +146,10 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const toggleStep = async (stepId: string) => {
+  const commitStepComplete = async (stepId: string, isCurrentlyDone: boolean) => {
     if (!progressId) return;
 
     const newSet = new Set(completedSteps);
-    const isCurrentlyDone = newSet.has(stepId);
-    
     if (isCurrentlyDone) {
       newSet.delete(stepId);
     } else {
@@ -151,7 +157,6 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
     }
     setCompletedSteps(newSet); // Optimistic UI update
 
-    // Upsert into DB (manually via select then update/insert to avoid unique constraint errors)
     const currentNotes = notesData[stepId] || '';
     const newStatus = isCurrentlyDone ? 'pending' : 'verified';
     
@@ -174,6 +179,85 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
         status: newStatus,
         metadata: { notes: currentNotes }
       });
+    }
+  };
+
+  const startCamera = async () => {
+    try {
+      setCameraError('');
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      setCameraError('Failed to access camera. Please check permissions.');
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setCameraActive(false);
+    setVerifyingStep(null);
+    setAiVerifying(false);
+  };
+
+  const captureAndVerify = async () => {
+    if (!videoRef.current || !canvasRef.current || !verifyingStep) return;
+    
+    setAiVerifying(true);
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const base64Image = canvas.toDataURL('image/jpeg');
+      
+      const stepData = steps.find(s => s.id === verifyingStep);
+      
+      try {
+        const res = await fetch('/api/ai/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image: base64Image,
+            prompt: stepData?.ai_validation_prompt || 'Verify this task is completed.'
+          })
+        });
+        const data = await res.json();
+        
+        if (data.verified) {
+          toast.success('AI Verification Passed!', { description: data.feedback });
+          await commitStepComplete(verifyingStep, false);
+          stopCamera();
+        } else {
+          toast.error('AI Verification Failed', { description: data.feedback });
+          setAiVerifying(false);
+        }
+      } catch (e) {
+        toast.error('Verification Error', { description: 'Failed to contact AI verifier.' });
+        setAiVerifying(false);
+      }
+    }
+  };
+
+  const toggleStep = async (stepId: string) => {
+    const isCurrentlyDone = completedSteps.has(stepId);
+    if (isCurrentlyDone) {
+      await commitStepComplete(stepId, isCurrentlyDone);
+    } else {
+      const stepData = steps.find(s => s.id === stepId);
+      if (stepData && stepData.verification_type === 'image') {
+        setVerifyingStep(stepId);
+        setCameraActive(true);
+        startCamera();
+      } else {
+        await commitStepComplete(stepId, isCurrentlyDone);
+      }
     }
   };
 
@@ -780,6 +864,69 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
           
         </div>
       </div>
+
+      {/* CAMERA VERIFICATION MODAL */}
+      <AnimatePresence>
+        {cameraActive && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+          >
+            <div className="bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden max-w-2xl w-full flex flex-col relative shadow-[0_0_50px_rgba(255,70,85,0.2)]">
+              <div className="p-6 border-b border-zinc-800 flex justify-between items-center bg-black/50">
+                <div className="flex items-center gap-3">
+                  <Camera className="w-6 h-6 text-[#ff4655]" />
+                  <h3 className="font-teko text-2xl text-white uppercase tracking-widest leading-none mt-1">Zero-Trust Visual Verification</h3>
+                </div>
+                <button onClick={stopCamera} className="text-zinc-500 hover:text-white transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="relative aspect-video bg-black flex items-center justify-center overflow-hidden group">
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  playsInline 
+                  muted 
+                  className={`w-full h-full object-cover transition-all ${aiVerifying ? 'grayscale blur-sm opacity-50' : ''}`}
+                />
+                <canvas ref={canvasRef} className="hidden" />
+                
+                {/* Scanner Overlay */}
+                <div className="absolute inset-0 pointer-events-none border-[4px] border-transparent group-hover:border-[#ff4655]/30 transition-colors z-10" />
+                
+                {aiVerifying && (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-[#ff4655]">
+                    <Loader2 className="w-12 h-12 animate-spin mb-4" />
+                    <p className="font-mono text-sm uppercase tracking-[0.3em] font-bold animate-pulse">AI Parsing Visual Data...</p>
+                  </div>
+                )}
+
+                {cameraError && (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 text-white text-center p-8">
+                    <AlertTriangle className="w-12 h-12 text-amber-500 mb-4" />
+                    <p className="font-mono text-sm">{cameraError}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-6 bg-black/50 border-t border-zinc-800">
+                <p className="text-xs text-zinc-400 font-mono uppercase tracking-widest mb-6 text-center">
+                  Target: {steps.find(s => s.id === verifyingStep)?.ai_validation_prompt || 'Ensure the requested object is clearly visible.'}
+                </p>
+                <Button 
+                  onClick={captureAndVerify}
+                  disabled={aiVerifying || !!cameraError}
+                  className="w-full h-16 text-xl font-teko uppercase tracking-[0.2em] bg-[#ff4655] hover:bg-[#ff5a67] text-white rounded-xl shadow-lg shadow-red-500/20"
+                >
+                  <Crosshair className="w-6 h-6 mr-3" /> Execute Scan
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Decorative Bottom Bar */}
       <div className="h-2 w-full bg-gradient-to-r from-transparent via-zinc-300 dark:via-[#ff4655] to-transparent mt-12 opacity-50 relative z-10" />

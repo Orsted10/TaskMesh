@@ -1,50 +1,98 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Gavel, CheckCircle2, XCircle, AlertTriangle, Scale, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { Gavel, CheckCircle2, XCircle, AlertTriangle, Scale, ChevronRight, Cpu, Crosshair, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-
-const MOCK_CASES = [
-  {
-    id: 'case-9942',
-    user: 'GhostProtocol',
-    task: 'Map 14 Potholes in Sector 4',
-    proofImage: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80',
-    aiVerdict: 'REJECTED',
-    aiConfidence: '82%',
-    aiReasoning: 'Image contains insufficient depth data. High probability of being a pre-existing photograph rather than live capture. Lack of visible metadata confirming coordinates.',
-    timestamp: '14 mins ago'
-  },
-  {
-    id: 'case-9943',
-    user: 'Viper_09',
-    task: 'Write 500 words of sci-fi novel',
-    proofImage: 'https://images.unsplash.com/photo-1455390582262-044cdead27d8?auto=format&fit=crop&q=80',
-    aiVerdict: 'REJECTED',
-    aiConfidence: '95%',
-    aiReasoning: 'Text analysis indicates 98% probability of LLM generation (AI-written). Vocabulary distribution does not match historical user baselines.',
-    timestamp: '1 hour ago'
-  }
-];
+import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/context/auth-context';
+import { formatDistanceToNow } from 'date-fns';
 
 export default function TribunalPage() {
-  const [cases, setCases] = useState(MOCK_CASES);
-  const [activeCase, setActiveCase] = useState(MOCK_CASES[0]);
+  const { user } = useAuth();
+  const [cases, setCases] = useState<any[]>([]);
+  const [activeCase, setActiveCase] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleVerdict = (caseId: string, action: 'overturn' | 'uphold') => {
-    if (action === 'overturn') {
-      toast.success('Verdict Submitted: OVERTURN. 15 EXP awarded for moderation.');
-    } else {
-      toast.success('Verdict Submitted: UPHOLD. 15 EXP awarded for moderation.');
-    }
+  useEffect(() => {
+    fetchCases();
+  }, [user]);
+
+  const fetchCases = async () => {
+    if (!user) return;
     
-    const newCases = cases.filter(c => c.id !== caseId);
-    setCases(newCases);
-    if (newCases.length > 0) {
-      setActiveCase(newCases[0]);
-    } else {
-      setActiveCase(null as any);
+    // Fetch pending cases that the current user hasn't voted on yet
+    const { data, error } = await supabase
+      .from('tribunal_cases')
+      .select(`
+        *,
+        users!tribunal_cases_user_id_fkey(username)
+      `)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error(error);
+      setLoading(false);
+      return;
+    }
+
+    // Filter out cases the user already voted on (if we had a complex query, we'd do it in SQL, but for now client-side filter is fine for MVP)
+    const { data: userVotes } = await supabase
+      .from('tribunal_votes')
+      .select('case_id')
+      .eq('voter_id', user.id);
+
+    const votedCaseIds = new Set((userVotes || []).map(v => v.case_id));
+    
+    const pendingCases = (data || []).filter(c => !votedCaseIds.has(c.id));
+    
+    setCases(pendingCases);
+    if (pendingCases.length > 0) {
+      setActiveCase(pendingCases[0]);
+    }
+    setLoading(false);
+  };
+
+  const handleVerdict = async (caseId: string, action: 'uphold' | 'overturn') => {
+    if (!user) return;
+
+    try {
+      // 1. Record the vote
+      const { error: voteError } = await supabase
+        .from('tribunal_votes')
+        .insert({
+          case_id: caseId,
+          voter_id: user.id,
+          vote: action
+        });
+
+      if (voteError) throw voteError;
+
+      // 2. For MVP: Resolve immediately after 1 vote to show it works
+      const newStatus = action === 'uphold' ? 'upheld' : 'overturned';
+      await supabase
+        .from('tribunal_cases')
+        .update({ status: newStatus, resolved_at: new Date().toISOString() })
+        .eq('id', caseId);
+      
+      // If overturned, we would normally credit the user who failed the step, but we will skip the complex EXP logic here for brevity.
+
+      if (action === 'overturn') {
+        toast.success('Verdict Submitted: OVERTURN. 15 EXP awarded for moderation.');
+      } else {
+        toast.success('Verdict Submitted: UPHOLD. 15 EXP awarded for moderation.');
+      }
+      
+      const newCases = cases.filter(c => c.id !== caseId);
+      setCases(newCases);
+      if (newCases.length > 0) {
+        setActiveCase(newCases[0]);
+      } else {
+        setActiveCase(null);
+      }
+    } catch (e: any) {
+      toast.error('Failed to submit verdict: ' + e.message);
     }
   };
 
@@ -72,7 +120,11 @@ export default function TribunalPage() {
           <h2 className="font-teko text-2xl text-white uppercase tracking-widest flex items-center gap-2">
             <Scale className="w-5 h-5 text-red-500" /> Pending Docket
           </h2>
-          {cases.length === 0 ? (
+          {loading ? (
+             <div className="bg-black border border-dashed border-zinc-800 rounded-xl p-8 flex items-center justify-center">
+               <Loader2 className="w-6 h-6 animate-spin text-red-500" />
+             </div>
+          ) : cases.length === 0 ? (
             <div className="bg-black border border-dashed border-zinc-800 rounded-xl p-8 text-center text-zinc-500 font-mono text-[10px] uppercase tracking-widest">
               No pending cases in queue.
             </div>
@@ -85,11 +137,11 @@ export default function TribunalPage() {
               >
                 {activeCase?.id === c.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500" />}
                 <div className="flex justify-between items-start">
-                  <span className="text-[9px] text-zinc-500 font-mono uppercase">{c.id}</span>
-                  <span className="text-[9px] text-zinc-600 font-mono">{c.timestamp}</span>
+                  <span className="text-[9px] text-zinc-500 font-mono uppercase">{c.id.substring(0,8)}</span>
+                  <span className="text-[9px] text-zinc-600 font-mono">{formatDistanceToNow(new Date(c.created_at))} ago</span>
                 </div>
-                <h3 className="font-teko text-xl text-white uppercase leading-none">{c.user}</h3>
-                <p className="text-[11px] text-zinc-400 uppercase tracking-widest truncate">{c.task}</p>
+                <h3 className="font-teko text-xl text-white uppercase leading-none">{c.users?.username || 'Unknown_Agent'}</h3>
+                <p className="text-[11px] text-zinc-400 uppercase tracking-widest truncate">{c.task_title}</p>
                 <div className="mt-2 flex items-center gap-1 text-[10px] font-mono text-red-500 bg-red-500/10 px-2 py-1 rounded w-max border border-red-500/30">
                   <AlertTriangle className="w-3 h-3" /> Flagged
                 </div>
@@ -111,12 +163,12 @@ export default function TribunalPage() {
               <div className="p-6 border-b border-zinc-800 flex justify-between items-center bg-black/50">
                 <div>
                   <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-1">
-                    <span>Target: {activeCase.user}</span>
+                    <span>Target: {activeCase.users?.username || 'Unknown'}</span>
                     <span>|</span>
                     <span>{activeCase.id}</span>
                   </div>
                   <h2 className="font-teko text-3xl text-white uppercase tracking-widest leading-none">
-                    {activeCase.task}
+                    {activeCase.task_title}
                   </h2>
                 </div>
               </div>
@@ -129,7 +181,7 @@ export default function TribunalPage() {
                   </h4>
                   <div className="aspect-square w-full rounded-xl overflow-hidden border border-zinc-800 relative group">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={activeCase.proofImage} alt="Proof" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" />
+                    <img src={activeCase.proof_image_url} alt="Proof" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" />
                     <div className="absolute inset-0 bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                       <div className="w-full h-[1px] bg-red-500/50 absolute top-1/2 -translate-y-1/2" />
                       <div className="w-[1px] h-full bg-red-500/50 absolute left-1/2 -translate-x-1/2" />
@@ -146,13 +198,13 @@ export default function TribunalPage() {
                   
                   <div className="bg-red-950/20 border border-red-500/30 rounded-xl p-4 mb-6">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="font-teko text-2xl text-red-500 uppercase">Verdict: {activeCase.aiVerdict}</span>
+                      <span className="font-teko text-2xl text-red-500 uppercase">Verdict: {activeCase.ai_verdict}</span>
                       <span className="text-[10px] font-mono text-zinc-400 bg-black px-2 py-1 rounded border border-zinc-800">
-                        Confidence: {activeCase.aiConfidence}
+                        Confidence: {activeCase.ai_confidence || 'N/A'}
                       </span>
                     </div>
                     <p className="text-[11px] text-zinc-400 font-mono uppercase tracking-widest leading-relaxed">
-                      {activeCase.aiReasoning}
+                      {activeCase.ai_reasoning}
                     </p>
                   </div>
 
@@ -196,6 +248,3 @@ export default function TribunalPage() {
     </div>
   );
 }
-
-// Need to inject Cpu and Crosshair icons since we used them
-import { Cpu, Crosshair } from 'lucide-react';
