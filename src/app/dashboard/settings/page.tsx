@@ -109,7 +109,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8 w-full max-w-[1600px] mx-auto pb-24">
-      <div className="flex items-center justify-between mb-8 border-b border-zinc-800 pb-4 sticky top-20 bg-zinc-950/80 backdrop-blur z-20 pt-4 -mt-4">
+      <div className="flex items-center justify-between mb-8 border-b border-zinc-800 pb-4">
         <div className="flex items-center gap-4">
           <Settings className="w-8 h-8 text-zinc-400 animate-spin-slow" />
           <h1 className="text-5xl font-teko text-white uppercase tracking-wider">System Config</h1>

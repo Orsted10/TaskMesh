@@ -38,10 +38,16 @@ export default function WorldMap({ bounties }: { bounties: Bounty[] }) {
         style={{ height: '100%', width: '100%', background: '#0B0C10' }}
         zoomControl={false}
       >
-        {/* CartoDB Dark Matter Theme for that sleek cyber look */}
+        {/* Tactical Dark Gray Base (Esri ArcGIS Canvas - Clean & No API Key Required) */}
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+          attribution='&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, DeLorme, NAVTEQ'
+          maxZoom={16}
+        />
+        <TileLayer
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
+          attribution=''
+          maxZoom={16}
         />
         
         {bounties.map((bounty) => (
