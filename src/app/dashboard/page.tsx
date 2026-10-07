@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 import { PerformanceRadar } from '@/components/dashboard/performance-radar';
 import { getTierAesthetic, SKILL_POOL } from '@/lib/rpg-data';
 import { MarqueeTicker } from '@/components/gamified-ui';
+import { cyberAudio } from '@/lib/cyber-audio';
+import { getPersonaConfig } from '@/lib/persona';
 
 export default function Dashboard() {
   const { user, rpgProfile, loading } = useAuth();
@@ -61,9 +63,11 @@ export default function Dashboard() {
       await supabase.from('user_quest_progress').delete().eq('id', progressId);
       const { error } = await supabase.from('quests').delete().eq('id', questId).eq('creator_id', user?.id);
       if (error) throw error;
+      cyberAudio.playGlitch();
       toast.success("Mission Terminated", { description: "The operation has been permanently scrubbed from the active matrix." });
       fetchActiveMissions();
     } catch (err: any) {
+      cyberAudio.playGlitch();
       toast.error('Termination Failed', { description: err.message });
     }
   };
@@ -74,6 +78,7 @@ export default function Dashboard() {
     
     setIsProcessing(true);
     setGeneratedQuest(null);
+    cyberAudio.playScan();
 
     try {
       const type = (payload.startsWith('http://') || payload.startsWith('https://')) ? 'url' : 'text';
@@ -84,7 +89,8 @@ export default function Dashboard() {
         body: JSON.stringify({ 
           type, 
           payload,
-          userSkills: rpgProfile?.specific_skills || {}
+          userSkills: rpgProfile?.specific_skills || {},
+          persona: rpgProfile?.preferences?.ai_persona || 'drill_sergeant'
         }),
       });
 
@@ -92,8 +98,10 @@ export default function Dashboard() {
       if (!res.ok) throw new Error(data.details || data.error || 'Failed to generate mission.');
 
       setGeneratedQuest(data);
+      cyberAudio.playSuccess();
       toast.success('Mission Protocol Synthesized.');
     } catch (err: any) {
+      cyberAudio.playGlitch();
       toast.error('AI Engine Error', { description: err.message });
     } finally {
       setIsProcessing(false);
@@ -103,6 +111,7 @@ export default function Dashboard() {
   const handleAcceptMission = async () => {
     if (!user || !generatedQuest || !generatedQuest.quests) return;
     setIsAccepting(true);
+    cyberAudio.playClick();
 
     try {
       for (const quest of generatedQuest.quests) {
@@ -147,12 +156,14 @@ export default function Dashboard() {
         if (progressError) throw progressError;
       }
 
+      cyberAudio.playAccept();
       toast.success('Campaign Accepted!', { description: `${generatedQuest.quests.length} missions added to active matrix.` });
       setGeneratedQuest(null);
       setPayload('');
       fetchActiveMissions();
 
     } catch (err: any) {
+      cyberAudio.playGlitch();
       toast.error('Failed to accept campaign', { description: err.message });
     } finally {
       setIsAccepting(false);
@@ -362,7 +373,7 @@ export default function Dashboard() {
             <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-[#ff4655] opacity-50" />
             <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#ff4655] opacity-50" />
             
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-[#ff4655]/10 rounded border border-[#ff4655]/20 relative">
                   <ScanEye className="w-6 h-6 text-[#ff4655] relative z-10" />
@@ -370,12 +381,29 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <h2 className="font-teko text-3xl text-white uppercase tracking-wider leading-none">Objective Synthesizer</h2>
-                  <p className="text-zinc-500 font-mono text-[10px] uppercase tracking-[0.2em]">GROQ Llama-3-70B Logic Engine</p>
+                  <p className="text-zinc-500 font-mono text-[10px] uppercase tracking-[0.2em]">GROQ High-Reasoning Engine (Qwen-27B)</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]" />
-                <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest font-mono">Uplink Active</span>
+              <div className="flex items-center gap-3 flex-wrap">
+                {(() => {
+                  const persona = getPersonaConfig(rpgProfile?.preferences?.ai_persona);
+                  return (
+                    <button 
+                      type="button"
+                      onClick={() => router.push('/dashboard/settings')}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700/80 hover:border-[#ff4655]/50 transition-colors group cursor-pointer"
+                      title="Click to modify active AI Persona in settings"
+                    >
+                      <span className="text-base">{persona.emoji}</span>
+                      <span className="text-xs font-mono font-bold text-zinc-300 group-hover:text-white uppercase">{persona.name}</span>
+                      <span className="text-[10px] font-mono text-zinc-500 hidden md:inline">({persona.tagline})</span>
+                    </button>
+                  );
+                })()}
+                <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-emerald-950/40 border border-emerald-800/40">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]" />
+                  <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest font-mono">Uplink Active</span>
+                </div>
               </div>
             </div>
 

@@ -148,6 +148,8 @@ You MUST respond in pure, raw JSON format matching this EXACT schema:
 }
 `;
 
+import { getPersonaConfig } from '@/lib/persona';
+
 export async function POST(req: Request) {
   try {
     if (!process.env.GROQ_API_KEY) {
@@ -156,11 +158,14 @@ export async function POST(req: Request) {
 
     const groq = getGroqClient();
     const body = await req.json();
-    const { type, payload, userSkills } = body;
+    const { type, payload, userSkills, persona } = body;
 
     if (!payload) {
       return NextResponse.json({ error: 'Payload is required' }, { status: 400 });
     }
+
+    const activePersona = getPersonaConfig(persona);
+    const activeSystemPrompt = `${SYSTEM_PROMPT}\n\nACTIVE AI PERSONA DIRECTIVE:\n${activePersona.questToneDirective}`;
 
     let rawContent = payload;
 
@@ -208,7 +213,7 @@ export async function POST(req: Request) {
 
     const completion = await createGroqChatCompletion(groq, {
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: activeSystemPrompt },
         { role: 'user', content: `USER'S CURRENT SKILLS (Out of 10000 points max per skill): ${JSON.stringify(userSkills || {})}\n\nGenerate a campaign from the following input:\n\n${rawContent}` },
       ],
       temperature: 0.3,

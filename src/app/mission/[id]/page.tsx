@@ -4,13 +4,15 @@ import { useEffect, useState, use, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
-import { Loader2, ArrowLeft, ShieldAlert, CheckCircle, Crosshair, Zap, Activity, Clock, Terminal, AlertTriangle, Fingerprint, Database, Cpu, Wifi, Radio, BookOpen, PenLine, ExternalLink, Info, Camera, X } from 'lucide-react';
+import { Loader2, ArrowLeft, ShieldAlert, CheckCircle, Crosshair, Zap, Activity, Clock, Terminal, AlertTriangle, Fingerprint, Database, Cpu, Wifi, Radio, BookOpen, PenLine, ExternalLink, Info, Camera, X, Upload, Sparkles, Check, RefreshCw, FileText, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { getTierAesthetic } from '@/lib/rpg-data';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { cyberAudio } from '@/lib/cyber-audio';
+import { getPersonaConfig } from '@/lib/persona';
 
 const SYSTEM_LOGS = [
   "INITIALIZING NEURAL LINK...",
@@ -49,13 +51,40 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
   const [timeSpent, setTimeSpent] = useState(0);
   const [currentLog, setCurrentLog] = useState(SYSTEM_LOGS[0]);
 
-  // Camera Verification State
+  // Camera & Upload Verification State
   const [cameraActive, setCameraActive] = useState(false);
   const [verifyingStep, setVerifyingStep] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState('');
   const [aiVerifying, setAiVerifying] = useState(false);
+  const [verificationMode, setVerificationMode] = useState<'camera' | 'upload'>('camera');
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [scanTelemetryIdx, setScanTelemetryIdx] = useState(0);
+  const [verificationVerdict, setVerificationVerdict] = useState<{
+    verified: boolean;
+    feedback: string;
+    confidence: number;
+    analysis?: string;
+  } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const SCAN_TELEMETRIES = [
+    "LOCKING SPECTRAL MATRIX...",
+    "EXTRACTING PIXEL FREQUENCIES...",
+    "RUNNING GROQ MULTIMODAL INFERENCE...",
+    "AUDITING ARTIFACTS & INTEGRITY...",
+    "CROSS-REFERENCING TASK CRITERIA...",
+    "CALCULATING ARBITER CONFIDENCE..."
+  ];
+
+  useEffect(() => {
+    if (!aiVerifying) return;
+    const interval = setInterval(() => {
+      setScanTelemetryIdx(prev => (prev + 1) % SCAN_TELEMETRIES.length);
+    }, 600);
+    return () => clearInterval(interval);
+  }, [aiVerifying]);
 
   // Mouse position for 3D tilt
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -182,6 +211,24 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
     }
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Invalid file format. Please upload an image.');
+      cyberAudio.playGlitch();
+      return;
+    }
+    cyberAudio.playClick();
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      setUploadedImage(base64);
+      toast.success('Visual Evidence Staged for Audit');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const startCamera = async () => {
     try {
       setCameraError('');
@@ -190,7 +237,7 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
         videoRef.current.srcObject = stream;
       }
     } catch (err) {
-      setCameraError('Failed to access camera. Please check permissions.');
+      setCameraError('Camera access denied or device unavailable. Switching to Upload Mode recommended.');
     }
   };
 
@@ -202,50 +249,90 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
     setCameraActive(false);
     setVerifyingStep(null);
     setAiVerifying(false);
+    setUploadedImage(null);
+    setVerificationVerdict(null);
   };
 
   const captureAndVerify = async () => {
-    if (!videoRef.current || !canvasRef.current || !verifyingStep) return;
-    
-    setAiVerifying(true);
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
+    if (!verifyingStep) return;
+
+    let base64Image = '';
+
+    if (verificationMode === 'upload') {
+      if (!uploadedImage) {
+        toast.error('Please upload an image proof first.');
+        cyberAudio.playGlitch();
+        return;
+      }
+      base64Image = uploadedImage;
+    } else {
+      if (!videoRef.current || !canvasRef.current) return;
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const base64Image = canvas.toDataURL('image/jpeg');
-      
-      const stepData = steps.find(s => s.id === verifyingStep);
-      
-      try {
-        const res = await fetch('/api/ai/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            image: base64Image,
-            prompt: stepData?.ai_validation_prompt || 'Verify this task is completed.'
-          })
+      base64Image = canvas.toDataURL('image/jpeg');
+    }
+
+    setAiVerifying(true);
+    cyberAudio.playScan();
+    setVerificationVerdict(null);
+
+    const stepData = steps.find(s => s.id === verifyingStep);
+    const persona = rpgProfile?.preferences?.ai_persona || 'drill_sergeant';
+
+    try {
+      const res = await fetch('/api/ai/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: base64Image,
+          prompt: stepData?.ai_validation_prompt || 'Verify this task is completed.',
+          persona
+        })
+      });
+      const data = await res.json();
+
+      if (data.verified) {
+        cyberAudio.playSuccess();
+        setVerificationVerdict({
+          verified: true,
+          feedback: data.feedback,
+          confidence: data.confidence || 95,
+          analysis: data.analysis
         });
-        const data = await res.json();
-        
-        if (data.verified) {
-          toast.success('AI Verification Passed!', { description: data.feedback });
-          await commitStepComplete(verifyingStep, false);
+        toast.success('Zero-Trust AI Verification Passed!', { 
+          description: `[${data.confidence || 95}% Confidence] ${data.feedback}` 
+        });
+        await commitStepComplete(verifyingStep, false);
+        setTimeout(() => {
           stopCamera();
-        } else {
-          toast.error('AI Verification Failed', { description: data.feedback });
-          setAiVerifying(false);
-        }
-      } catch (e) {
-        toast.error('Verification Error', { description: 'Failed to contact AI verifier.' });
+        }, 2500);
+      } else {
+        cyberAudio.playGlitch();
+        setVerificationVerdict({
+          verified: false,
+          feedback: data.feedback,
+          confidence: data.confidence || 20,
+          analysis: data.analysis
+        });
+        toast.error('AI Verification Rejected', { 
+          description: `[${data.confidence || 0}% Confidence] ${data.feedback}` 
+        });
         setAiVerifying(false);
       }
+    } catch (e: any) {
+      cyberAudio.playGlitch();
+      toast.error('Verification Error', { description: 'Failed to contact AI verifier.' });
+      setAiVerifying(false);
     }
   };
 
   const toggleStep = async (stepId: string) => {
+    cyberAudio.playClick();
     const isCurrentlyDone = completedSteps.has(stepId);
     if (isCurrentlyDone) {
       await commitStepComplete(stepId, isCurrentlyDone);
@@ -254,6 +341,9 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
       if (stepData && stepData.verification_type === 'image') {
         setVerifyingStep(stepId);
         setCameraActive(true);
+        setVerificationMode('camera');
+        setUploadedImage(null);
+        setVerificationVerdict(null);
         startCamera();
       } else {
         await commitStepComplete(stepId, isCurrentlyDone);
@@ -264,6 +354,7 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
   const handleSaveNote = async (stepId: string, note: string) => {
     if (!progressId) return;
     setSavingNote(prev => ({ ...prev, [stepId]: true }));
+    cyberAudio.playClick();
     const isDone = completedSteps.has(stepId);
     const newStatus = isDone ? 'verified' : 'pending';
 
@@ -287,13 +378,14 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
         metadata: { notes: note }
       });
     }
+    cyberAudio.playSuccess();
     toast.success('Notes Secured!');
     setSavingNote(prev => ({ ...prev, [stepId]: false }));
   };
 
   const handleTeachMe = async (step: any) => {
     if (teachData[step.id]?.loading) return;
-    
+    cyberAudio.playClick();
     setTeachData(prev => ({ ...prev, [step.id]: { loading: true, data: null } }));
     
     try {
@@ -303,12 +395,15 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
          body: JSON.stringify({
            stepTitle: step.title,
            stepInstruction: step.instruction,
-           userSkills: rpgProfile?.specific_skills || {}
+           userSkills: rpgProfile?.specific_skills || {},
+           persona: rpgProfile?.preferences?.ai_persona || 'drill_sergeant'
          })
        });
        const json = await res.json();
+       cyberAudio.playSuccess();
        setTeachData(prev => ({ ...prev, [step.id]: { loading: false, data: json.response } }));
     } catch (e) {
+       cyberAudio.playGlitch();
        setTeachData(prev => ({ ...prev, [step.id]: { loading: false, data: 'Error establishing teacher link.' } }));
     }
   };
@@ -322,11 +417,13 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
 
   const handleCompleteMission = async () => {
     if (completedSteps.size < steps.length) {
+      cyberAudio.playGlitch();
       toast.error('Complete all steps before extracting!');
       return;
     }
     
     setCompleting(true);
+    cyberAudio.playExtract();
     try {
       await supabase
         .from('user_quest_progress')
@@ -367,6 +464,7 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
       toast.success('MISSION ACCOMPLISHED', { description: `+${expReward} EXP | +${goldReward} GOLD | +${shineReward} SHINE Gained!` });
       router.push('/dashboard');
     } catch (err) {
+      cyberAudio.playGlitch();
       toast.error('Failed to complete mission');
     } finally {
       setCompleting(false);
@@ -488,13 +586,31 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
           
           <Button 
             variant="outline" 
-            onClick={() => router.push('/dashboard')}
-            className="self-start mb-8 text-[#ff4655] hover:text-white border-[#ff4655] hover:bg-[#ff4655] uppercase tracking-[0.2em] font-bold text-xs group transition-all rounded-sm shadow-[0_0_15px_rgba(255,70,85,0.2)] hover:shadow-[0_0_25px_rgba(255,70,85,0.6)] relative overflow-hidden"
+            onClick={() => {
+              cyberAudio.playGlitch();
+              router.push('/dashboard');
+            }}
+            className="self-start mb-6 text-[#ff4655] hover:text-white border-[#ff4655] hover:bg-[#ff4655] uppercase tracking-[0.2em] font-bold text-xs group transition-all rounded-sm shadow-[0_0_15px_rgba(255,70,85,0.2)] hover:shadow-[0_0_25px_rgba(255,70,85,0.6)] relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_5px,rgba(255,70,85,0.1)_5px,rgba(255,70,85,0.1)_10px)] pointer-events-none" />
             <AlertTriangle className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform relative z-10" />
             <span className="relative z-10">EMERGENCY ABORT</span>
           </Button>
+
+          {/* PERMADEATH HIGH-STAKES RISK SURGE BANNER */}
+          <div className="bg-gradient-to-r from-red-950/80 via-black to-red-950/80 border border-red-500/40 p-4 rounded-xl mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[0_0_25px_rgba(255,70,85,0.2)] relative overflow-hidden">
+            <div className="absolute top-0 left-0 bottom-0 w-1 bg-[#ff4655]" />
+            <div className="flex items-center gap-3">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+              <span className="text-red-400 font-mono text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                <Zap className="w-4 h-4 text-red-500" /> PERMADEATH RISK SURGE: 2.5X EXP MULTIPLIER
+              </span>
+            </div>
+            <div className="text-[10px] text-zinc-400 font-mono tracking-widest uppercase flex items-center gap-2">
+              <span className="text-zinc-500">ZERO DEFECT TOLERANCE</span>
+              <span className="text-[#ff4655]">| ZERO-TRUST AUDIT</span>
+            </div>
+          </div>
 
           {/* Mission Header */}
           <motion.div 
@@ -865,64 +981,281 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
         </div>
       </div>
 
-      {/* CAMERA VERIFICATION MODAL */}
+      {/* ZERO-TRUST CYBERNETIC VERIFICATION MODAL */}
       <AnimatePresence>
         {cameraActive && (
           <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md p-4"
           >
-            <div className="bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden max-w-2xl w-full flex flex-col relative shadow-[0_0_50px_rgba(255,70,85,0.2)]">
-              <div className="p-6 border-b border-zinc-800 flex justify-between items-center bg-black/50">
+            <div className="bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden max-w-2xl w-full flex flex-col relative shadow-[0_0_80px_rgba(255,70,85,0.25)] border-[#ff4655]/30">
+              
+              {/* Modal Header */}
+              <div className="p-6 border-b border-zinc-800 flex justify-between items-center bg-black/80 relative">
                 <div className="flex items-center gap-3">
-                  <Camera className="w-6 h-6 text-[#ff4655]" />
-                  <h3 className="font-teko text-2xl text-white uppercase tracking-widest leading-none mt-1">Zero-Trust Visual Verification</h3>
+                  <div className="p-2 rounded-lg bg-[#ff4655]/10 border border-[#ff4655]/30 text-[#ff4655]">
+                    <Camera className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="font-teko text-3xl text-white uppercase tracking-widest leading-none mt-1 flex items-center gap-2">
+                      Zero-Trust Visual Arbiter
+                    </h3>
+                    <p className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">
+                      Groq Multimodal Vision Engine (Qwen-27B)
+                    </p>
+                  </div>
                 </div>
-                <button onClick={stopCamera} className="text-zinc-500 hover:text-white transition-colors">
-                  <X className="w-6 h-6" />
-                </button>
+
+                <div className="flex items-center gap-4">
+                  {(() => {
+                    const persona = getPersonaConfig(rpgProfile?.preferences?.ai_persona);
+                    return (
+                      <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded bg-zinc-900 border border-zinc-700/60 text-xs font-mono">
+                        <span>{persona.emoji}</span>
+                        <span className="font-bold text-zinc-300 uppercase">{persona.name} Arbiter</span>
+                      </div>
+                    );
+                  })()}
+                  <button 
+                    onClick={() => {
+                      cyberAudio.playClick();
+                      stopCamera();
+                    }} 
+                    className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Mode Selector Pill */}
+              <div className="px-6 py-3 bg-black/40 border-b border-zinc-800/80 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      cyberAudio.playClick();
+                      setVerificationMode('camera');
+                      setCameraError('');
+                      startCamera();
+                    }}
+                    className={`px-3 py-1.5 rounded-md font-mono text-xs uppercase tracking-wider flex items-center gap-2 transition-all ${
+                      verificationMode === 'camera'
+                        ? 'bg-[#ff4655] text-white font-bold shadow-[0_0_12px_rgba(255,70,85,0.4)]'
+                        : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+                    }`}
+                  >
+                    <Camera className="w-3.5 h-3.5" /> Live Camera
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      cyberAudio.playClick();
+                      setVerificationMode('upload');
+                    }}
+                    className={`px-3 py-1.5 rounded-md font-mono text-xs uppercase tracking-wider flex items-center gap-2 transition-all ${
+                      verificationMode === 'upload'
+                        ? 'bg-[#ff4655] text-white font-bold shadow-[0_0_12px_rgba(255,70,85,0.4)]'
+                        : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+                    }`}
+                  >
+                    <Upload className="w-3.5 h-3.5" /> Upload File
+                  </button>
+                </div>
+                <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> SENSORS READY
+                </span>
               </div>
               
-              <div className="relative aspect-video bg-black flex items-center justify-center overflow-hidden group">
-                <video 
-                  ref={videoRef} 
-                  autoPlay 
-                  playsInline 
-                  muted 
-                  className={`w-full h-full object-cover transition-all ${aiVerifying ? 'grayscale blur-sm opacity-50' : ''}`}
-                />
-                <canvas ref={canvasRef} className="hidden" />
+              {/* Main Visual Frame */}
+              <div className="relative aspect-video bg-black flex items-center justify-center overflow-hidden group select-none">
                 
-                {/* Scanner Overlay */}
-                <div className="absolute inset-0 pointer-events-none border-[4px] border-transparent group-hover:border-[#ff4655]/30 transition-colors z-10" />
-                
-                {aiVerifying && (
-                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-[#ff4655]">
-                    <Loader2 className="w-12 h-12 animate-spin mb-4" />
-                    <p className="font-mono text-sm uppercase tracking-[0.3em] font-bold animate-pulse">AI Parsing Visual Data...</p>
+                {/* Mode 1: Camera */}
+                {verificationMode === 'camera' && (
+                  <>
+                    <video 
+                      ref={videoRef} 
+                      autoPlay 
+                      playsInline 
+                      muted 
+                      className={`w-full h-full object-cover transition-all ${aiVerifying ? 'brightness-50 grayscale blur-[1px]' : ''}`}
+                    />
+                    <canvas ref={canvasRef} className="hidden" />
+
+                    {cameraError && (
+                      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/90 text-white text-center p-8">
+                        <AlertTriangle className="w-12 h-12 text-amber-500 mb-4 animate-bounce" />
+                        <p className="font-mono text-sm max-w-md mb-6 text-zinc-300">{cameraError}</p>
+                        <Button 
+                          onClick={() => {
+                            cyberAudio.playClick();
+                            setVerificationMode('upload');
+                          }}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-mono text-xs uppercase tracking-widest"
+                        >
+                          <Upload className="w-4 h-4 mr-2" /> Switch to Image Upload Mode
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Mode 2: Upload */}
+                {verificationMode === 'upload' && (
+                  <div className="w-full h-full flex items-center justify-center p-6 bg-zinc-950/80">
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleFileUpload} 
+                    />
+                    
+                    {!uploadedImage ? (
+                      <div 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full h-full border-2 border-dashed border-zinc-800 hover:border-[#ff4655]/60 rounded-2xl flex flex-col items-center justify-center cursor-pointer p-6 transition-all group/upload bg-black/40 hover:bg-[#ff4655]/5"
+                      >
+                        <div className="p-4 rounded-full bg-zinc-900 group-hover/upload:bg-[#ff4655]/20 group-hover/upload:scale-110 transition-all mb-4 text-zinc-400 group-hover/upload:text-[#ff4655]">
+                          <Upload className="w-10 h-10" />
+                        </div>
+                        <p className="text-white font-teko text-2xl uppercase tracking-wider mb-1">
+                          Drop Photo Proof Or Click To Browse
+                        </p>
+                        <p className="text-xs text-zinc-500 font-mono tracking-widest uppercase">
+                          PNG, JPG, WEBP • Max 10MB
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-xl">
+                        <img 
+                          src={uploadedImage} 
+                          alt="Uploaded Proof" 
+                          className={`max-w-full max-h-full object-contain ${aiVerifying ? 'brightness-50 grayscale blur-[1px]' : ''}`} 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="absolute top-3 right-3 px-3 py-1.5 rounded-lg bg-black/80 hover:bg-zinc-800 border border-zinc-700 text-white text-xs font-mono uppercase tracking-wider flex items-center gap-1.5 transition-colors z-30"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" /> Re-select File
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {cameraError && (
-                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 text-white text-center p-8">
-                    <AlertTriangle className="w-12 h-12 text-amber-500 mb-4" />
-                    <p className="font-mono text-sm">{cameraError}</p>
-                  </div>
+                {/* Cyber Reticle Corner Brackets */}
+                <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-[#ff4655]/80 pointer-events-none z-10" />
+                <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-[#ff4655]/80 pointer-events-none z-10" />
+                <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-[#ff4655]/80 pointer-events-none z-10" />
+                <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-[#ff4655]/80 pointer-events-none z-10" />
+                
+                {/* Center target crosshair */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+                  <Crosshair className="w-24 h-24 text-white" strokeWidth={1} />
+                </div>
+
+                {/* Laser Scanning Grid Overlay when verifying */}
+                {aiVerifying && (
+                  <>
+                    <motion.div 
+                      animate={{ top: ['2%', '96%', '2%'] }}
+                      transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                      className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#ff4655] to-transparent shadow-[0_0_25px_#ff4655] z-30 pointer-events-none" 
+                    />
+                    
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-[#ff4655] bg-black/40">
+                      <Loader2 className="w-14 h-14 animate-spin mb-4" />
+                      <p className="font-mono text-sm uppercase tracking-[0.3em] font-bold text-white drop-shadow-[0_0_8px_#ff4655]">
+                        {SCAN_TELEMETRIES[scanTelemetryIdx]}
+                      </p>
+                      <p className="font-mono text-[10px] text-zinc-400 mt-2 tracking-widest">
+                        ANALYZING SPECTRAL SIGNATURE & RESOLUTION
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                {/* Verification Verdict Display Overlay */}
+                {verificationVerdict && !aiVerifying && (
+                  <motion.div 
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/90 p-8 text-center"
+                  >
+                    {verificationVerdict.verified ? (
+                      <div className="flex flex-col items-center">
+                        <div className="p-4 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 mb-4 animate-bounce">
+                          <CheckCircle2 className="w-14 h-14" />
+                        </div>
+                        <h4 className="font-teko text-5xl text-emerald-400 uppercase tracking-widest leading-none mb-2">
+                          VERIFIED • {verificationVerdict.confidence}% CONFIDENCE
+                        </h4>
+                        <p className="text-zinc-200 font-mono text-sm max-w-lg leading-relaxed mb-4">
+                          "{verificationVerdict.feedback}"
+                        </p>
+                        {verificationVerdict.analysis && (
+                          <p className="text-xs text-zinc-500 font-mono italic max-w-md">
+                            Evidence: {verificationVerdict.analysis}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <div className="p-4 rounded-full bg-red-500/20 text-red-500 border border-red-500/40 mb-4 animate-pulse">
+                          <AlertTriangle className="w-14 h-14" />
+                        </div>
+                        <h4 className="font-teko text-5xl text-red-500 uppercase tracking-widest leading-none mb-2">
+                          VERIFICATION REJECTED
+                        </h4>
+                        <p className="text-zinc-200 font-mono text-sm max-w-lg leading-relaxed mb-6">
+                          "{verificationVerdict.feedback}"
+                        </p>
+                        <Button
+                          onClick={() => {
+                            setVerificationVerdict(null);
+                            cyberAudio.playClick();
+                          }}
+                          className="bg-zinc-800 hover:bg-zinc-700 text-white font-mono text-xs uppercase tracking-widest px-6"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5 mr-2" /> Retake Proof
+                        </Button>
+                      </div>
+                    )}
+                  </motion.div>
                 )}
               </div>
 
-              <div className="p-6 bg-black/50 border-t border-zinc-800">
-                <p className="text-xs text-zinc-400 font-mono uppercase tracking-widest mb-6 text-center">
-                  Target: {steps.find(s => s.id === verifyingStep)?.ai_validation_prompt || 'Ensure the requested object is clearly visible.'}
-                </p>
+              {/* Modal Footer Controls */}
+              <div className="p-6 bg-black/80 border-t border-zinc-800 flex flex-col gap-4">
+                <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 text-xs font-mono text-zinc-300 flex items-start gap-3">
+                  <Fingerprint className="w-4 h-4 text-[#ff4655] flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-[#ff4655] uppercase tracking-wider mr-2">Target Criteria:</span>
+                    <span>{steps.find(s => s.id === verifyingStep)?.ai_validation_prompt || 'Ensure the required task action is clearly visible.'}</span>
+                  </div>
+                </div>
+
                 <Button 
                   onClick={captureAndVerify}
-                  disabled={aiVerifying || !!cameraError}
-                  className="w-full h-16 text-xl font-teko uppercase tracking-[0.2em] bg-[#ff4655] hover:bg-[#ff5a67] text-white rounded-xl shadow-lg shadow-red-500/20"
+                  disabled={aiVerifying || (verificationMode === 'upload' && !uploadedImage)}
+                  className="w-full h-16 text-2xl font-teko uppercase tracking-[0.2em] bg-[#ff4655] hover:bg-[#ff5a67] text-white rounded-xl shadow-[0_0_30px_rgba(255,70,85,0.4)] disabled:opacity-50 transition-all flex items-center justify-center gap-3"
                 >
-                  <Crosshair className="w-6 h-6 mr-3" /> Execute Scan
+                  {aiVerifying ? (
+                    <>
+                      <Loader2 className="w-6 h-6 animate-spin" /> Scanning Matrix...
+                    </>
+                  ) : (
+                    <>
+                      <Crosshair className="w-6 h-6" /> Execute Zero-Trust Scan
+                    </>
+                  )}
                 </Button>
               </div>
+
             </div>
           </motion.div>
         )}

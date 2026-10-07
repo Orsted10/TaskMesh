@@ -7,6 +7,8 @@ import { useAuth } from '@/context/auth-context';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
+import { cyberAudio } from '@/lib/cyber-audio';
+
 export default function SettingsPage() {
   const { user, rpgProfile, refreshProfile } = useAuth();
   const [activePersona, setActivePersona] = useState('drill_sergeant');
@@ -77,18 +79,16 @@ export default function SettingsPage() {
       localStorage.setItem('actio_theme_color', themeColor);
       localStorage.setItem('actio_sound_fx', String(soundFx));
       localStorage.setItem('actio_ui_density', uiDensity);
+      cyberAudio.setMuted(!soundFx);
       
       await refreshProfile();
       toast.success('Configuration Saved', { description: 'System parameters have been globally updated.' });
       
-      // Play a sound if enabled
-      if (soundFx) {
-        const audio = new Audio('/success.mp3');
-        audio.volume = 0.5;
-        audio.play().catch(e => console.log('Audio disabled by browser'));
-      }
+      // Play high-tech triumph tone
+      cyberAudio.playSuccess();
     } catch (err: any) {
       toast.error('Save Failed', { description: err.message });
+      cyberAudio.playGlitch();
     } finally {
       setSaving(false);
     }
