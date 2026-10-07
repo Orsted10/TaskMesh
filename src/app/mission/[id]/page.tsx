@@ -4,7 +4,7 @@ import { useEffect, useState, use, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
-import { Loader2, ArrowLeft, ShieldAlert, CheckCircle, Crosshair, Zap, Activity, Clock, Terminal, AlertTriangle, Fingerprint, Database, Cpu, Wifi, Radio, BookOpen, PenLine, ExternalLink, Info, Camera, X, Upload, Sparkles, Check, RefreshCw, FileText, CheckCircle2 } from 'lucide-react';
+import { Loader2, ArrowLeft, ShieldAlert, CheckCircle, Crosshair, Zap, Activity, Clock, Terminal, AlertTriangle, Fingerprint, Database, Cpu, Wifi, Radio, BookOpen, PenLine, ExternalLink, Info, Camera, X, Upload, Sparkles, Check, RefreshCw, FileText, CheckCircle2, Code2, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { getTierAesthetic } from '@/lib/rpg-data';
@@ -13,6 +13,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { cyberAudio } from '@/lib/cyber-audio';
 import { getPersonaConfig } from '@/lib/persona';
+import { CodeSandbox } from '@/components/mission/code-sandbox';
+import { CompletionCertificate, CertificateData } from '@/components/mission/completion-certificate';
+import { getLevelFromTotalExp, getTitleForLevel } from '@/lib/leveling-math';
 
 const SYSTEM_LOGS = [
   "INITIALIZING NEURAL LINK...",
@@ -32,7 +35,7 @@ const SYSTEM_LOGS = [
 
 export default function MissionPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const { user, rpgProfile, loading: authLoading } = useAuth();
+  const { user, rpgProfile, loading: authLoading, refreshProfile } = useAuth();
   const router = useRouter();
   
   const [mission, setMission] = useState<any>(null);
@@ -40,10 +43,14 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
   
+  // Certificate State
+  const [certificateData, setCertificateData] = useState<CertificateData | null>(null);
+  const [showCertificate, setShowCertificate] = useState(false);
+
   // Persistence & Action Bar States
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
   const [progressId, setProgressId] = useState<string | null>(null);
-  const [activeAction, setActiveAction] = useState<Record<string, 'teach' | 'notes' | 'resources' | null>>({});
+  const [activeAction, setActiveAction] = useState<Record<string, 'teach' | 'notes' | 'resources' | 'code' | null>>({});
   const [teachData, setTeachData] = useState<Record<string, { loading: boolean, data: string | null }>>({});
   const [notesData, setNotesData] = useState<Record<string, string>>({});
   const [savingNote, setSavingNote] = useState<Record<string, boolean>>({});
@@ -51,12 +58,12 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
   const [timeSpent, setTimeSpent] = useState(0);
   const [currentLog, setCurrentLog] = useState(SYSTEM_LOGS[0]);
 
-  // Camera & Upload Verification State
+  // Camera, Upload & Code Verification State
   const [cameraActive, setCameraActive] = useState(false);
   const [verifyingStep, setVerifyingStep] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState('');
   const [aiVerifying, setAiVerifying] = useState(false);
-  const [verificationMode, setVerificationMode] = useState<'camera' | 'upload'>('camera');
+  const [verificationMode, setVerificationMode] = useState<'camera' | 'upload' | 'code'>('camera');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [scanTelemetryIdx, setScanTelemetryIdx] = useState(0);
   const [verificationVerdict, setVerificationVerdict] = useState<{
@@ -439,30 +446,92 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
       
       const { data: profile } = await supabase
         .from('users')
-        .select('total_exp, gold, shine, skillpoints, specific_skills')
+        .select('*')
         .eq('id', user!.id)
         .single();
         
       if (profile) {
-        let updatedSkills = profile.specific_skills || {};
+        // 1. Calculate Core Attribute Growth based on mission category
+        const rawCategory = (mission.category || 'intelligence').toLowerCase();
+        let coreCategory = 'intelligence';
+        if (rawCategory.includes('strength') || rawCategory.includes('fitness') || rawCategory.includes('body')) coreCategory = 'strength';
+        else if (rawCategory.includes('intel') || rawCategory.includes('tech') || rawCategory.includes('code')) coreCategory = 'intelligence';
+        else if (rawCategory.includes('creativ') || rawCategory.includes('art') || rawCategory.includes('design')) coreCategory = 'creativity';
+        else if (rawCategory.includes('craft') || rawCategory.includes('build') || rawCategory.includes('culinary')) coreCategory = 'craftsmanship';
+        else if (rawCategory.includes('charis') || rawCategory.includes('social') || rawCategory.includes('civic')) coreCategory = 'charisma';
+        else if (rawCategory.includes('will') || rawCategory.includes('mind') || rawCategory.includes('endur')) coreCategory = 'willpower';
+
+        const statGain = Math.max(1, Math.min(10, mission.difficulty || 1));
+        const currentCoreSkills = profile.skills || {
+          strength: 10, intelligence: 10, charisma: 10,
+          creativity: 10, craftsmanship: 10, willpower: 10
+        };
+        const updatedCoreSkills = {
+          ...currentCoreSkills,
+          [coreCategory]: (currentCoreSkills[coreCategory] || 10) + statGain
+        };
+
+        // 2. Calculate Specific Skills Growth
+        let updatedSpecificSkills = profile.specific_skills || {};
         earnedSkills.forEach((skill: any) => {
-          updatedSkills[skill.name] = (updatedSkills[skill.name] || 0) + skill.value;
+          updatedSpecificSkills[skill.name] = (updatedSpecificSkills[skill.name] || 0) + skill.value;
         });
 
+        // 3. Dynamic Leveling Calculation
+        const newTotalExp = (profile.total_exp || 0) + expReward;
+        const newLevel = getLevelFromTotalExp(newTotalExp);
+        const newTitle = getTitleForLevel(newLevel);
+        const newStreak = (profile.current_streak || 0) + 1;
+        const newMaxStreak = Math.max(newStreak, profile.max_streak || 0);
+
+        // 4. Persist to Supabase Database
         await supabase
           .from('users')
           .update({ 
-            total_exp: (profile.total_exp || 0) + expReward,
+            total_exp: newTotalExp,
+            level: newLevel,
+            title: newTitle,
             gold: (profile.gold || 0) + goldReward,
             shine: (profile.shine || 0) + shineReward,
             skillpoints: (profile.skillpoints || 0) + skillpointsReward,
-            specific_skills: updatedSkills
+            current_streak: newStreak,
+            max_streak: newMaxStreak,
+            skills: updatedCoreSkills,
+            specific_skills: updatedSpecificSkills
           })
           .eq('id', user!.id);
+
+        // 5. Update local auth state immediately
+        await refreshProfile();
+
+        // 6. Generate Official Completion Certificate
+        setCertificateData({
+          operativeName: profile.full_name || profile.username || 'Operative',
+          operativeLevel: newLevel,
+          operativeTitle: newTitle,
+          missionTitle: mission.title,
+          campaignTitle: mission.campaign_title || 'Tactical Operations Matrix',
+          tier: mission.tier || 'STANDARD MISSION',
+          category: mission.category || 'INTELLIGENCE',
+          difficulty: mission.difficulty || 1,
+          timeSpentSeconds: timeSpent,
+          rewards: {
+            xp: expReward,
+            gold: goldReward,
+            shine: shineReward,
+            skillpoints: skillpointsReward,
+            coreStatName: coreCategory,
+            coreStatGain: statGain,
+            specific_skills: earnedSkills
+          },
+          personaId: rpgProfile?.preferences?.ai_persona
+        });
+        setShowCertificate(true);
       }
       
-      toast.success('MISSION ACCOMPLISHED', { description: `+${expReward} EXP | +${goldReward} GOLD | +${shineReward} SHINE Gained!` });
-      router.push('/dashboard');
+      toast.success('MISSION ACCOMPLISHED', { 
+        description: `+${expReward} EXP | +${goldReward} GOLD | Attributes Upgraded!` 
+      });
     } catch (err) {
       cyberAudio.playGlitch();
       toast.error('Failed to complete mission');
@@ -840,6 +909,14 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                           >
                             <ExternalLink className="w-3.5 h-3.5 mr-2" /> Resources
                           </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setActiveAction(prev => ({ ...prev, [step.id]: prev[step.id] === 'code' ? null : 'code' }))}
+                            className={`text-xs uppercase tracking-widest font-bold ${activeAction[step.id] === 'code' ? 'bg-[#ff4655]/10 text-[#ff4655] border-[#ff4655]' : 'text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+                          >
+                            <Code2 className="w-3.5 h-3.5 mr-2" /> Code IDE
+                          </Button>
                         </div>
 
                         {/* ACTION CONTENT PANELS */}
@@ -910,6 +987,21 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                                     </div>
                                   )}
                                 </div>
+                              </motion.div>
+                            )}
+
+                            {activeAction[step.id] === 'code' && (
+                              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mt-2">
+                                <CodeSandbox
+                                  stepTitle={step.title}
+                                  stepInstruction={step.instruction}
+                                  validationPrompt={step.ai_validation_prompt}
+                                  persona={rpgProfile?.preferences?.ai_persona}
+                                  onVerified={async () => {
+                                    await commitStepComplete(step.id, false);
+                                    toast.success("Objective Verified via Code Execution!");
+                                  }}
+                                />
                               </motion.div>
                             )}
                           </AnimatePresence>
@@ -1063,6 +1155,20 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                   >
                     <Upload className="w-3.5 h-3.5" /> Upload File
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      cyberAudio.playClick();
+                      setVerificationMode('code');
+                    }}
+                    className={`px-3 py-1.5 rounded-md font-mono text-xs uppercase tracking-wider flex items-center gap-2 transition-all ${
+                      verificationMode === 'code'
+                        ? 'bg-[#ff4655] text-white font-bold shadow-[0_0_12px_rgba(255,70,85,0.4)]'
+                        : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+                    }`}
+                  >
+                    <Code2 className="w-3.5 h-3.5" /> Code IDE
+                  </button>
                 </div>
                 <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> SENSORS READY
@@ -1070,7 +1176,7 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
               </div>
               
               {/* Main Visual Frame */}
-              <div className="relative aspect-video bg-black flex items-center justify-center overflow-hidden group select-none">
+              <div className="relative min-h-[360px] aspect-video bg-black flex items-center justify-center overflow-hidden group select-none">
                 
                 {/* Mode 1: Camera */}
                 {verificationMode === 'camera' && (
@@ -1147,16 +1253,36 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
                   </div>
                 )}
 
-                {/* Cyber Reticle Corner Brackets */}
-                <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-[#ff4655]/80 pointer-events-none z-10" />
-                <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-[#ff4655]/80 pointer-events-none z-10" />
-                <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-[#ff4655]/80 pointer-events-none z-10" />
-                <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-[#ff4655]/80 pointer-events-none z-10" />
-                
-                {/* Center target crosshair */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-                  <Crosshair className="w-24 h-24 text-white" strokeWidth={1} />
-                </div>
+                {/* Mode 3: Code IDE */}
+                {verificationMode === 'code' && (
+                  <div className="w-full h-full max-h-[460px] overflow-y-auto p-3 bg-zinc-950">
+                    <CodeSandbox
+                      stepTitle={steps.find(s => s.id === verifyingStep)?.title || 'Coding Objective'}
+                      stepInstruction={steps.find(s => s.id === verifyingStep)?.instruction || ''}
+                      validationPrompt={steps.find(s => s.id === verifyingStep)?.ai_validation_prompt || ''}
+                      persona={rpgProfile?.preferences?.ai_persona}
+                      onVerified={async () => {
+                        await commitStepComplete(verifyingStep!, false);
+                        toast.success("Objective Verified via Code Execution!");
+                        setTimeout(() => stopCamera(), 1800);
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Cyber Reticle Corner Brackets (for camera & upload modes) */}
+                {verificationMode !== 'code' && (
+                  <>
+                    <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-[#ff4655]/80 pointer-events-none z-10" />
+                    <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-[#ff4655]/80 pointer-events-none z-10" />
+                    <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-[#ff4655]/80 pointer-events-none z-10" />
+                    <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-[#ff4655]/80 pointer-events-none z-10" />
+                    
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+                      <Crosshair className="w-24 h-24 text-white" strokeWidth={1} />
+                    </div>
+                  </>
+                )}
 
                 {/* Laser Scanning Grid Overlay when verifying */}
                 {aiVerifying && (
@@ -1230,36 +1356,50 @@ export default function MissionPage({ params }: { params: Promise<{ id: string }
               </div>
 
               {/* Modal Footer Controls */}
-              <div className="p-6 bg-black/80 border-t border-zinc-800 flex flex-col gap-4">
-                <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 text-xs font-mono text-zinc-300 flex items-start gap-3">
-                  <Fingerprint className="w-4 h-4 text-[#ff4655] flex-shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold text-[#ff4655] uppercase tracking-wider mr-2">Target Criteria:</span>
-                    <span>{steps.find(s => s.id === verifyingStep)?.ai_validation_prompt || 'Ensure the required task action is clearly visible.'}</span>
+              {verificationMode !== 'code' && (
+                <div className="p-6 bg-black/80 border-t border-zinc-800 flex flex-col gap-4">
+                  <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 text-xs font-mono text-zinc-300 flex items-start gap-3">
+                    <Fingerprint className="w-4 h-4 text-[#ff4655] flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-[#ff4655] uppercase tracking-wider mr-2">Target Criteria:</span>
+                      <span>{steps.find(s => s.id === verifyingStep)?.ai_validation_prompt || 'Ensure the required task action is clearly visible.'}</span>
+                    </div>
                   </div>
-                </div>
 
-                <Button 
-                  onClick={captureAndVerify}
-                  disabled={aiVerifying || (verificationMode === 'upload' && !uploadedImage)}
-                  className="w-full h-16 text-2xl font-teko uppercase tracking-[0.2em] bg-[#ff4655] hover:bg-[#ff5a67] text-white rounded-xl shadow-[0_0_30px_rgba(255,70,85,0.4)] disabled:opacity-50 transition-all flex items-center justify-center gap-3"
-                >
-                  {aiVerifying ? (
-                    <>
-                      <Loader2 className="w-6 h-6 animate-spin" /> Scanning Matrix...
-                    </>
-                  ) : (
-                    <>
-                      <Crosshair className="w-6 h-6" /> Execute Zero-Trust Scan
-                    </>
-                  )}
-                </Button>
-              </div>
+                  <Button 
+                    onClick={captureAndVerify}
+                    disabled={aiVerifying || (verificationMode === 'upload' && !uploadedImage)}
+                    className="w-full h-16 text-2xl font-teko uppercase tracking-[0.2em] bg-[#ff4655] hover:bg-[#ff5a67] text-white rounded-xl shadow-[0_0_30px_rgba(255,70,85,0.4)] disabled:opacity-50 transition-all flex items-center justify-center gap-3"
+                  >
+                    {aiVerifying ? (
+                      <>
+                        <Loader2 className="w-6 h-6 animate-spin" /> Scanning Matrix...
+                      </>
+                    ) : (
+                      <>
+                        <Crosshair className="w-6 h-6" /> Execute Zero-Trust Scan
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
 
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* OFFICIAL COMPLETION CERTIFICATE MODAL */}
+      {certificateData && (
+        <CompletionCertificate
+          data={certificateData}
+          isOpen={showCertificate}
+          onClose={() => {
+            setShowCertificate(false);
+            router.push('/dashboard');
+          }}
+        />
+      )}
       
       {/* Decorative Bottom Bar */}
       <div className="h-2 w-full bg-gradient-to-r from-transparent via-zinc-300 dark:via-[#ff4655] to-transparent mt-12 opacity-50 relative z-10" />

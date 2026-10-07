@@ -6,6 +6,7 @@ import { useAuth } from '@/context/auth-context';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
+import { cyberAudio } from '@/lib/cyber-audio';
 
 export default function ArsenalPage() {
   const { user, rpgProfile, refreshProfile } = useAuth();
@@ -36,33 +37,60 @@ export default function ArsenalPage() {
 
   const handlePurchase = async (item: any) => {
     if (!user || !rpgProfile) return;
-    if (rpgProfile.gold < item.price_gold) {
+    if ((rpgProfile.gold || 0) < (item.price_gold || 0)) {
+      cyberAudio.playGlitch();
       toast.error('Insufficient A-Coins!');
       return;
     }
-    if (rpgProfile.shine < item.price_shine) {
+    if ((rpgProfile.shine || 0) < (item.price_shine || 0)) {
+      cyberAudio.playGlitch();
       toast.error('Insufficient Shine!');
       return;
     }
 
     try {
-      // Decrement currency and insert inventory
-      // (This should ideally be a Postgres RPC to ensure atomic transactions)
-      // For now we simulate the frontend check
-      toast.success(`Purchased ${item.name}!`);
-      
-      // Update local state to feel realtime
+      const newGold = Math.max(0, (rpgProfile.gold || 0) - (item.price_gold || 0));
+      const newShine = Math.max(0, (rpgProfile.shine || 0) - (item.price_shine || 0));
+
+      // 1. Deduct currency in Supabase
+      const { error: userUpdateError } = await supabase
+        .from('users')
+        .update({ gold: newGold, shine: newShine })
+        .eq('id', user.id);
+
+      if (userUpdateError) throw userUpdateError;
+
+      // 2. Persist inventory in Supabase
+      const existing = inventory.find(i => i.item_id === item.id);
+      if (existing) {
+        await supabase
+          .from('user_inventory')
+          .update({ quantity: existing.quantity + 1 })
+          .eq('user_id', user.id)
+          .eq('item_id', item.id);
+      } else {
+        await supabase
+          .from('user_inventory')
+          .insert({ user_id: user.id, item_id: item.id, quantity: 1 });
+      }
+
+      // 3. Update local state & refresh profile
       const updatedInv = [...inventory];
-      const existing = updatedInv.find(i => i.item_id === item.id);
       if (existing) {
         existing.quantity += 1;
       } else {
         updatedInv.push({ item_id: item.id, quantity: 1 });
       }
       setInventory(updatedInv);
-      
-    } catch (err) {
-      toast.error('Transaction Failed');
+
+      await refreshProfile();
+      cyberAudio.playSuccess();
+      toast.success(`Acquired ${item.name}!`, {
+        description: `Deducted ${item.price_gold || 0} A-Coins. Added to tactical loadout.`
+      });
+    } catch (err: any) {
+      cyberAudio.playGlitch();
+      toast.error('Transaction Failed', { description: err.message });
     }
   };
 

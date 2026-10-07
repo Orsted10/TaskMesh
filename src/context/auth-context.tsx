@@ -13,9 +13,11 @@ export type RpgProfile = {
   level: number;
   total_exp: number;
   current_streak: number;
+  max_streak?: number;
   multiplier: number;
   gold: number;
   shine: number;
+  skillpoints?: number;
   title: string;
   skills: {
     strength: number;
