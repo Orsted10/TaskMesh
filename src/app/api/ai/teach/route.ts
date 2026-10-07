@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import Groq from 'groq-sdk';
+import { getGroqClient, createGroqChatCompletion } from '@/lib/groq';
 
 export async function POST(req: Request) {
   try {
@@ -7,7 +7,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'GROQ_API_KEY is not configured.' }, { status: 500 });
     }
 
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    const groq = getGroqClient();
     const { stepTitle, stepInstruction, userSkills } = await req.json();
 
     if (!stepInstruction) {
@@ -26,12 +26,11 @@ CRITICAL RULES:
 
     const userPrompt = `USER'S CURRENT SKILLS: ${JSON.stringify(userSkills || {})}\n\nTEACH ME HOW TO DO THIS:\nTitle: ${stepTitle}\nInstruction: ${stepInstruction}\n\nGive me a crash course to complete this right now!`;
 
-    const completion = await groq.chat.completions.create({
+    const completion = await createGroqChatCompletion(groq, {
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      model: 'llama-3.1-8b-instant',
       temperature: 0.7,
     });
 

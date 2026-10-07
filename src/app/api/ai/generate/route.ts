@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server'
-import Groq from 'groq-sdk'
-
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-})
+import { getGroqClient, createGroqChatCompletion } from '@/lib/groq'
 
 const SYSTEM_PROMPT = `You are the Actio Quest Architect. Your job is to convert passive text into highly structured, engaging, actionable game-like quests.
 You MUST output ONLY a raw JSON object matching this exact schema, with NO markdown formatting (do not wrap in \`\`\`json):
@@ -36,12 +32,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Content is required' }, { status: 400 })
     }
 
-    const completion = await groq.chat.completions.create({
+    const groq = getGroqClient()
+
+    const completion = await createGroqChatCompletion(groq, {
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: `Generate a quest from this content: ${content}` }
       ],
-      model: 'llama3-8b-8192', // Using 8b for speed and extreme cost efficiency as requested
       temperature: 0.5,
       response_format: { type: 'json_object' }
     })

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import Groq from 'groq-sdk';
+import { getGroqClient, createGroqChatCompletion } from '@/lib/groq';
 import * as cheerio from 'cheerio';
 import { YoutubeTranscript } from 'youtube-transcript';
 
@@ -154,7 +154,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'GROQ_API_KEY is not configured.' }, { status: 500 });
     }
 
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    const groq = getGroqClient();
     const body = await req.json();
     const { type, payload, userSkills } = body;
 
@@ -206,12 +206,11 @@ export async function POST(req: Request) {
       }
     }
 
-    const completion = await groq.chat.completions.create({
+    const completion = await createGroqChatCompletion(groq, {
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: `USER'S CURRENT SKILLS (Out of 10000 points max per skill): ${JSON.stringify(userSkills || {})}\n\nGenerate a campaign from the following input:\n\n${rawContent}` },
       ],
-      model: 'llama-3.3-70b-versatile',
       temperature: 0.3,
       response_format: { type: 'json_object' },
     });

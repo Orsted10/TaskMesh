@@ -6,7 +6,17 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/context/auth-context';
-import { formatDistanceToNow } from 'date-fns';
+
+function formatTimeAgo(date: Date): string {
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+  if (seconds < 60) return `${Math.max(1, seconds)}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `${days}d`;
+}
 
 export default function TribunalPage() {
   const { user } = useAuth();
@@ -138,7 +148,7 @@ export default function TribunalPage() {
                 {activeCase?.id === c.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500" />}
                 <div className="flex justify-between items-start">
                   <span className="text-[9px] text-zinc-500 font-mono uppercase">{c.id.substring(0,8)}</span>
-                  <span className="text-[9px] text-zinc-600 font-mono">{formatDistanceToNow(new Date(c.created_at))} ago</span>
+                  <span className="text-[9px] text-zinc-600 font-mono">{formatTimeAgo(new Date(c.created_at))} ago</span>
                 </div>
                 <h3 className="font-teko text-xl text-white uppercase leading-none">{c.users?.username || 'Unknown_Agent'}</h3>
                 <p className="text-[11px] text-zinc-400 uppercase tracking-widest truncate">{c.task_title}</p>
